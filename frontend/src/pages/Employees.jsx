@@ -117,9 +117,9 @@ const Employees = () => {
 
     try {
       if (modalMode === 'add') {
-        await axios.post('http://localhost:5052/api/auth/register', formData);
+        await api.post('/api/auth/register', formData);
       } else {
-        await axios.put(`http://localhost:5052/api/employees/${selectedEmployee._id}`, formData);
+        await api.put(`/api/employees/${selectedEmployee._id}`, formData);
       }
       setShowModal(false);
       resetForm();
@@ -134,7 +134,7 @@ const Employees = () => {
   const confirmDelete = async () => {
     try {
       setIsSubmitting(true);
-      await axios.delete(`http://localhost:5052/api/employees/${selectedEmployee._id}`);
+      await api.delete(`/api/employees/${selectedEmployee._id}`);
       setShowDeleteConfirm(false);
       fetchEmployees();
     } catch (error) {

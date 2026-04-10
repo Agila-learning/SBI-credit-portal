@@ -59,7 +59,7 @@ const Profile = () => {
 
     setUploading(true);
     try {
-      const res = await axios.post('http://localhost:5052/api/upload', data);
+      const res = await api.post('/api/upload', data);
       setFormData({ ...formData, profilePicture: res.data.fileUrl });
       setMessage({ type: 'success', text: 'Photo uploaded! Don\'t forget to save changes.' });
     } catch (error) {
@@ -75,7 +75,7 @@ const Profile = () => {
     setMessage(null);
 
     try {
-      const res = await axios.put('http://localhost:5052/api/users/profile', formData);
+      const res = await api.put('/api/users/profile', formData);
       // Update local storage/context if needed
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (error) {

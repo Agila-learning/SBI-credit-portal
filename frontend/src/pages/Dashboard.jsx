@@ -67,10 +67,10 @@ const Dashboard = () => {
   const fetchDashboardData = useCallback(async () => {
     try {
       const [statsRes, lbRes, incRes, taskRes] = await Promise.all([
-        axios.get('http://localhost:5052/api/stats/dashboard'),
-        axios.get('http://localhost:5052/api/stats/leaderboard?period=daily'),
-        axios.get('http://localhost:5052/api/incentives'),
-        axios.get('http://localhost:5052/api/tasks')
+        api.get('/api/stats/dashboard'),
+        api.get('/api/stats/leaderboard?period=daily'),
+        api.get('/api/incentives'),
+        api.get('/api/tasks')
       ]);
       setStats(statsRes.data);
       setLeaderboard(lbRes.data);
@@ -91,7 +91,7 @@ const Dashboard = () => {
     if (!empId) return;
     setIsCalculating(true);
     try {
-      const res = await axios.post('http://localhost:5052/api/incentives/calculate', { 
+      const res = await api.post('/api/incentives/calculate', { 
         employeeId: empId, 
         month 
       });
@@ -106,7 +106,7 @@ const Dashboard = () => {
 
   const handleFinalizePayout = async (statusOverride = null) => {
     try {
-      await axios.put(`http://localhost:5052/api/incentives/${calculatedIncentive._id}`, {
+      await api.put(`/api/incentives/${calculatedIncentive._id}`, {
         status: statusOverride || 'Approved',
         adjustments: adjustment,
         incentiveAmount: calculatedIncentive.incentiveAmount + Number(adjustment.amount)
@@ -120,7 +120,7 @@ const Dashboard = () => {
   const handleBulkGenerate = async () => {
     if (!window.confirm(`Generate incentives for all employees for ${month}?`)) return;
     try {
-      await axios.post('http://localhost:5052/api/incentives/bulk', { month });
+      await api.post('/api/incentives/bulk', { month });
       alert('Bulk generation initiated!');
       fetchDashboardData();
     } catch (e) { console.error(e); }
@@ -128,7 +128,7 @@ const Dashboard = () => {
 
   const downloadReport = async () => {
     try {
-      const response = await axios.get(`http://localhost:5052/api/incentives/export?month=${month}`, {
+      const response = await api.get(`/api/incentives/export?month=${month}`, {
         responseType: 'blob',
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));

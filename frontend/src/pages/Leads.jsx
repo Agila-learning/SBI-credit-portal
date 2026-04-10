@@ -49,7 +49,7 @@ const Leads = () => {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`http://localhost:5052/api/leads?status=${statusFilter}`);
+      const res = await api.get(`/api/leads?status=${statusFilter}`);
       setLeads(res.data);
     } catch (error) {
       console.error("Error fetching leads", error);

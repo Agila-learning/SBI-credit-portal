@@ -50,8 +50,8 @@ const Tasks = () => {
     try {
       setLoading(true);
       const [taskRes, empRes] = await Promise.all([
-        axios.get('http://localhost:5052/api/tasks'),
-        user.role === 'admin' ? axios.get('http://localhost:5052/api/employees') : Promise.resolve({ data: [] })
+        api.get('/api/tasks'),
+        user.role === 'admin' ? api.get('/api/employees') : Promise.resolve({ data: [] })
       ]);
       setTasks(taskRes.data);
       if (user.role === 'admin') setEmployees(empRes.data);
@@ -70,7 +70,7 @@ const Tasks = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await axios.post('http://localhost:5052/api/tasks', newTask);
+      await api.post('/api/tasks', newTask);
       setShowModal(false);
       setNewTask({
         title: '',
@@ -94,7 +94,7 @@ const Tasks = () => {
     if (newVal === null) return;
     
     try {
-      await axios.put(`http://localhost:5052/api/tasks/${taskId}`, { 
+      await api.put(`/api/tasks/${taskId}`, { 
         achievedCount: parseInt(newVal) || 0 
       });
       fetchData();
@@ -106,7 +106,7 @@ const Tasks = () => {
   const toggleStatus = async (taskId, currentStatus) => {
     const nextStatus = currentStatus === 'Completed' ? 'In Progress' : 'Completed';
     try {
-      await axios.put(`http://localhost:5052/api/tasks/${taskId}`, { status: nextStatus });
+      await api.put(`/api/tasks/${taskId}`, { status: nextStatus });
       fetchData();
     } catch (error) {
       alert("Failed to update status");

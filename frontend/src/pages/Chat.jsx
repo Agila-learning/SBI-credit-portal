@@ -165,7 +165,7 @@ const Chat = () => {
   const loadContacts = useCallback(async () => {
     try {
       setContactsLoading(true);
-      const res = await axios.get('http://localhost:5052/api/chat/contacts');
+      const res = await api.get('/api/chat/contacts');
       setContacts(res.data);
     } catch (e) {
       console.error(e);
@@ -182,10 +182,10 @@ const Chat = () => {
     const load = async () => {
       setMsgsLoading(true);
       try {
-        const res = await axios.get(`http://localhost:5052/api/chat/${selected._id}`);
+        const res = await api.get(`/api/chat/${selected._id}`);
         setMessages(res.data);
         // Mark as read
-        await axios.put(`http://localhost:5052/api/chat/read/${selected._id}`);
+        await api.put(`/api/chat/read/${selected._id}`);
         socketRef.current?.emit('messageRead', { senderId: selected._id, conversationUserId: user._id });
         // Reset unread in contacts
         setContacts(prev => prev.map(c => c._id === selected._id ? { ...c, unreadCount: 0 } : c));

@@ -27,7 +27,7 @@ const IncentiveSlabManager = () => {
   const fetchSlabs = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5052/api/slabs');
+      const res = await api.get('/api/slabs');
       setSlabs(res.data);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -37,9 +37,9 @@ const IncentiveSlabManager = () => {
     e.preventDefault();
     try {
       if (editingSlab) {
-        await axios.put(`http://localhost:5052/api/slabs/${editingSlab._id}`, formData);
+        await api.put(`/api/slabs/${editingSlab._id}`, formData);
       } else {
-        await axios.post('http://localhost:5052/api/slabs', formData);
+        await api.post('/api/slabs', formData);
       }
       setShowModal(false);
       setEditingSlab(null);

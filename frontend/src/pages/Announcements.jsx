@@ -36,7 +36,7 @@ const Announcements = () => {
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5052/api/announcements');
+      const res = await api.get('/api/announcements');
       setAnnouncements(res.data);
     } catch (error) {
       console.error("Error fetching announcements", error);
@@ -53,7 +53,7 @@ const Announcements = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const { data } = await axios.post('http://localhost:5052/api/announcements', newAnnouncement);
+      const { data } = await api.post('/api/announcements', newAnnouncement);
       if (data) {
         setShowModal(false);
         setNewAnnouncement({ title: '', content: '', priority: 'Medium', expiresAt: '' });
@@ -71,7 +71,7 @@ const Announcements = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this announcement?")) return;
     try {
-      await axios.delete(`http://localhost:5052/api/announcements/${id}`);
+      await api.delete(`/api/announcements/${id}`);
       fetchAnnouncements();
     } catch (error) {
       alert("Failed to delete");
