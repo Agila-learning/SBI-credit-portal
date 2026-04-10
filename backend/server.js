@@ -42,6 +42,28 @@ const startApp = async () => {
       console.log('Admin credentials verified/reset.');
     }
 
+    // Robust Auto-seed for Employee
+    const empEmail = 'employee@sbicard.com';
+    let employee = await User.findOne({ email: empEmail }).select('+password');
+    if (!employee) {
+      console.log('No sample employee found, creating...');
+      await User.create({
+        name: 'Sample Employee',
+        email: empEmail,
+        password: 'adminpassword123',
+        role: 'employee',
+        employeeId: 'EMP-001',
+        phone: '1234567890',
+      });
+      console.log('Sample employee created.');
+    } else {
+      console.log('Sample employee found, ensuring credentials are correct...');
+      employee.password = 'adminpassword123';
+      employee.role = 'employee';
+      await employee.save();
+      console.log('Employee credentials verified/reset.');
+    }
+
     const { setupDailyLeaderboardSnapshot } = require('./src/utils/scheduler');
     setupDailyLeaderboardSnapshot();
   } catch (err) {
