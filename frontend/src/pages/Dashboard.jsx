@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { 
   PhoneCall, CheckCircle, Truck, BarChart3, Trophy, Users, AlertCircle, 
   Loader2, Star, Target, Zap, Award, Activity, IndianRupee, Plus, 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
+import api, { API_URL } from '../utils/api';
 import { io } from 'socket.io-client';
 import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
 import {
