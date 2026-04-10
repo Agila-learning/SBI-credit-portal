@@ -13,10 +13,35 @@ const connectDB = require('./src/config/db');
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Connect to database
-connectDB();
+const User = require('./src/models/User');
 
-const { setupDailyLeaderboardSnapshot } = require('./src/utils/scheduler');
-setupDailyLeaderboardSnapshot();
+const startApp = async () => {
+  try {
+    await connectDB();
+    
+    // Auto-seed Admin if not exists
+    const adminExists = await User.findOne({ role: 'admin' });
+    if (!adminExists) {
+      console.log('No admin found, auto-seeding default admin...');
+      await User.create({
+        name: 'System Administrator',
+        email: 'admin@sbicard.com',
+        password: 'adminpassword123',
+        role: 'admin',
+        employeeId: 'ADMIN-001',
+        phone: '9876543210',
+      });
+      console.log('Default admin created: admin@sbicard.com / adminpassword123');
+    }
+
+    const { setupDailyLeaderboardSnapshot } = require('./src/utils/scheduler');
+    setupDailyLeaderboardSnapshot();
+  } catch (err) {
+    console.error('Failed to start application sequence:', err);
+  }
+};
+
+startApp();
 
 const app = express();
 const server = http.createServer(app);
