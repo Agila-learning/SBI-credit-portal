@@ -19,19 +19,27 @@ const startApp = async () => {
   try {
     await connectDB();
     
-    // Auto-seed Admin if not exists
-    const adminExists = await User.findOne({ role: 'admin' });
-    if (!adminExists) {
-      console.log('No admin found, auto-seeding default admin...');
+    // Robust Auto-seed for Admin
+    const adminEmail = 'admin@sbicard.com';
+    let admin = await User.findOne({ email: adminEmail }).select('+password');
+    
+    if (!admin) {
+      console.log('No admin found, creating default admin...');
       await User.create({
         name: 'System Administrator',
-        email: 'admin@sbicard.com',
+        email: adminEmail,
         password: 'adminpassword123',
         role: 'admin',
         employeeId: 'ADMIN-001',
         phone: '9876543210',
       });
-      console.log('Default admin created: admin@sbicard.com / adminpassword123');
+      console.log('Default admin created successfully.');
+    } else {
+      console.log('Admin user found, ensuring credentials are correct...');
+      admin.password = 'adminpassword123';
+      admin.role = 'admin';
+      await admin.save();
+      console.log('Admin credentials verified/reset.');
     }
 
     const { setupDailyLeaderboardSnapshot } = require('./src/utils/scheduler');
