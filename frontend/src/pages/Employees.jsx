@@ -55,7 +55,7 @@ const Employees = () => {
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5052/api/employees');
+      const res = await api.get('/api/employees');
       setEmployees(res.data);
     } catch (error) {
       console.error("Error fetching employees", error);
@@ -145,9 +145,10 @@ const Employees = () => {
   };
 
   const filteredEmployees = employees.filter(emp => {
-    const matchesSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         emp.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLow = searchTerm.toLowerCase();
+    const matchesSearch = (emp.name?.toLowerCase() || '').includes(searchLow) ||
+                         (emp.employeeId?.toLowerCase() || '').includes(searchLow) ||
+                         (emp.email?.toLowerCase() || '').includes(searchLow);
     const matchesStatus = statusFilter === 'all' || emp.status === statusFilter;
     const matchesRole = roleFilter === 'all' || emp.role === roleFilter;
     

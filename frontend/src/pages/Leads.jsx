@@ -184,7 +184,7 @@ const Leads = () => {
 
     setIsSubmitting(true);
     try {
-      await axios.post('http://localhost:5052/api/leads/batch', {
+      await api.post('/api/leads/batch', {
         date: new Date(),
         counts: batchCounts,
         leads: batchLeads
@@ -218,11 +218,12 @@ const Leads = () => {
     XLSX.writeFile(wb, `Sales_Audit_Detail_${format(new Date(), 'yyyyMMdd')}.xlsx`);
   };
 
-  const filteredLeads = leads.filter(lead => 
-    lead.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.mobileNumber.includes(searchTerm) ||
-    lead.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLeads = leads.filter(lead => {
+    const searchLow = searchTerm.toLowerCase();
+    return (lead.customerName?.toLowerCase() || '').includes(searchLow) ||
+           (lead.mobileNumber || '').includes(searchTerm) ||
+           (lead.location?.toLowerCase() || '').includes(searchLow);
+  });
 
   const statusColors = {
     'Called': 'bg-blue-50 text-[var(--stage-called)] border-blue-100',
