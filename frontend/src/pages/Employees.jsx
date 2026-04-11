@@ -118,7 +118,12 @@ const Employees = () => {
 
     try {
       if (modalMode === 'add') {
-        await api.post('/api/auth/register', formData);
+        // Fallback password if left blank to prevent registration errors
+        const submitData = { ...formData };
+        if (!submitData.password || submitData.password.trim() === '') {
+          submitData.password = 'adminpassword123';
+        }
+        await api.post('/api/auth/register', submitData);
       } else {
         await api.put(`/api/employees/${selectedEmployee._id}`, formData);
       }
@@ -274,7 +279,7 @@ const Employees = () => {
                   </div>
                   <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-1.5 opacity-60">
                     <Shield size={10} />
-                    {emp.role === 'admin' ? 'Administrator' : 'Sales Professional'}
+                    {emp.role === 'admin' ? 'Administrator' : emp.role === 'team_leader' ? 'Team Leader' : 'Sales Professional'}
                   </p>
                 </div>
               </div>

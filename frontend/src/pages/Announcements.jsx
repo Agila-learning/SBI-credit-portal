@@ -179,7 +179,7 @@ const Announcements = () => {
       {/* Post Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md animate-fade-in">
-          <div className="bg-white rounded-[4rem] w-full max-w-xl shadow-2xl relative overflow-hidden animate-slide-up">
+          <div className="bg-white rounded-[4rem] w-full max-w-xl shadow-2xl relative animate-slide-up flex flex-col max-h-[90vh]">
             <div className="sbi-gradient px-12 py-10 text-white shrink-0">
                <div className="flex items-center justify-between">
                  <div>
