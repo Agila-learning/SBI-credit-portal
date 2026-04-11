@@ -8,16 +8,30 @@ const createTask = async (req, res) => {
   try {
     const { title, description, assignedTo, dueDate, priority, type, targetCount } = req.body;
 
+    // Ensure assignedTo is always an array
+    const assignments = Array.isArray(assignedTo) ? assignedTo : [assignedTo];
+
     const task = await Task.create({
       title,
       description,
-      assignedTo,
+      assignedTo: assignments,
       dueDate,
       priority,
       type,
       targetCount,
       createdBy: req.user._id
     });
+
+    // Notify assigned users in real-time
+    if (req.io && assignments.length > 0) {
+      req.io.emit('notification', {
+        type: 'task',
+        title: 'New Task Assigned',
+        message: task.title,
+        targets: assignments,
+        data: task
+      });
+    }
 
     res.status(201).json(task);
   } catch (error) {
@@ -81,6 +95,18 @@ const updateTask = async (req, res) => {
     }
 
     const updatedTask = await task.save();
+    
+    // Notify relevant users
+    if (req.io) {
+      req.io.emit('notification', {
+        type: 'task_update',
+        title: 'Task Updated',
+        message: `${updatedTask.title} is now ${updatedTask.status}`,
+        targets: updatedTask.assignedTo,
+        data: updatedTask
+      });
+    }
+
     res.json(updatedTask);
   } catch (error) {
     res.status(400).json({ message: error.message });

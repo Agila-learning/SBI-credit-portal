@@ -17,9 +17,11 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 
 const Announcements = () => {
   const { user } = useAuth();
+  const { socket } = useSocket();
   const isAdminOrTL = user?.role === 'admin' || user?.role === 'team_leader';
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +49,19 @@ const Announcements = () => {
 
   useEffect(() => {
     fetchAnnouncements();
-  }, []);
+    
+    if (socket) {
+      socket.on('notification', (notif) => {
+        if (notif.type === 'announcement') {
+          fetchAnnouncements();
+        }
+      });
+    }
+
+    return () => {
+      if (socket) socket.off('notification');
+    };
+  }, [socket]);
 
   const handleCreate = async (e) => {
     e.preventDefault();

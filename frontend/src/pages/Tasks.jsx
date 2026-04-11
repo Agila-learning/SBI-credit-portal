@@ -24,9 +24,11 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 
 const Tasks = () => {
   const { user } = useAuth();
+  const { socket } = useSocket();
   const isAdminOrTL = user?.role === 'admin' || user?.role === 'team_leader';
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +66,22 @@ const Tasks = () => {
 
   useEffect(() => {
     fetchData();
-  }, [user]);
+
+    if (socket) {
+      socket.on('notification', (notif) => {
+        if (notif.type === 'task' || notif.type === 'task_update') {
+          // Check if notification is for this user or if they are admin/TL
+          if (isAdminOrTL || (notif.targets && notif.targets.includes(user?._id))) {
+             fetchData();
+          }
+        }
+      });
+    }
+
+    return () => {
+      if (socket) socket.off('notification');
+    };
+  }, [user, socket]);
 
   const handleCreateTask = async (e) => {
     e.preventDefault();

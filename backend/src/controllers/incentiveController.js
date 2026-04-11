@@ -105,13 +105,71 @@ const bulkGenerate = async (req, res) => {
     
     const results = [];
     for (const emp of employees) {
-      // Simulate/Internal call to calculation logic
-      // In a real app, we might extract the calculation to a service
-      // For simplicity, we'll just process them here
-      results.push(emp._id);
+      // Internal calculation logic call
+      try {
+        // Prepare a mock request object for internal use or refactor logic
+        // For simplicity here, we'll repeat the logic but ideally it should be a service
+        const employeeId = emp._id;
+        
+        const [mm, yyyy] = month.split('-').map(Number);
+        const startDate = new Date(yyyy, mm - 1, 1);
+        const endDate = endOfMonth(startDate);
+
+        const reports = await DailyReport.find({
+          employee: employeeId,
+          date: { $gte: startDate, $lte: endDate }
+        });
+
+        const stats = reports.reduce((acc, curr) => ({
+          called: acc.called + (curr.counts?.callsDone || 0),
+          selected: acc.selected + (curr.counts?.selected || 0),
+          rejected: acc.rejected + (curr.counts?.rejected || 0),
+          dispatched: acc.dispatched + (curr.counts?.dispatched || 0)
+        }), { called: 0, selected: 0, rejected: 0, dispatched: 0 });
+
+        const slabs = await IncentiveSlab.find({ isActive: true }).sort({ minCards: 1 });
+        const matchedSlab = slabs.find(s => stats.dispatched >= s.minCards && stats.dispatched <= s.maxCards);
+
+        let baseAmount = 0;
+        let rateUsed = 0;
+        let bonusApplied = 0;
+
+        if (matchedSlab) {
+          rateUsed = matchedSlab.ratePerCard;
+          bonusApplied = matchedSlab.bonusAmount;
+          baseAmount = (stats.dispatched * rateUsed) + bonusApplied;
+        }
+
+        const payload = {
+          employee: employeeId,
+          month,
+          dispatchedCards: stats.dispatched,
+          selectedApps: stats.selected,
+          totalCalls: stats.called,
+          totalRejected: stats.rejected,
+          slabUsed: matchedSlab ? matchedSlab._id : null,
+          rateApplied: rateUsed,
+          bonusApplied: bonusApplied,
+          incentiveAmount: baseAmount,
+          updatedBy: req.user._id
+        };
+
+        let incentive = await Incentive.findOne({ employee: employeeId, month });
+        if (incentive) {
+          if (incentive.status === 'Pending') {
+            Object.assign(incentive, payload);
+            await incentive.save();
+          }
+        } else {
+          await Incentive.create(payload);
+        }
+        results.push(emp._id);
+      } catch (err) {
+        console.error(`Incentive calculation failed for ${emp.name}:`, err);
+      }
     }
 
-    res.json({ message: `Initiated generation for ${results.length} employees for cycle ${month}`, count: results.length });
+    res.json({ message: `Calculated incentives for ${results.length} employees for cycle ${month}`, count: results.length });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

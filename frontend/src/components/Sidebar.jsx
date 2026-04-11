@@ -10,7 +10,9 @@ import {
   MessageSquare,
   ChevronRight,
   ListTodo,
-  Megaphone
+  Megaphone,
+  Coins,
+  Settings
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -31,6 +33,9 @@ const Sidebar = () => {
 
   if (isAdmin) {
     navItems.splice(3, 0, { name: 'Team Matrix', path: '/employees', icon: Users });
+    navItems.push({ name: 'Incentive Config', path: '/incentive-config', icon: Settings });
+  } else {
+    navItems.push({ name: 'My Incentives', path: '/incentives', icon: Coins });
   }
 
   return (

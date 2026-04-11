@@ -106,6 +106,10 @@ const io = new Server(server, {
 
 // Middleware
 app.use(express.json());
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 app.use(cors());
 app.use(helmet({
   crossOriginResourcePolicy: false, // For local image viewing
@@ -205,6 +209,21 @@ io.on('connection', (socket) => {
     const recipientSocketId = socketUsers.get(recipientId);
     if (recipientSocketId) {
       io.to(recipientSocketId).emit('messageDeleted', { messageId });
+    }
+  });
+
+  // Generic notification relay
+  socket.on('sendNotification', (data) => {
+    // data: { targets: [userId], title, message, ... }
+    if (data.isBroadcast) {
+      socket.broadcast.emit('notification', data);
+    } else if (data.targets) {
+      data.targets.forEach(targetId => {
+        const targetSocketId = socketUsers.get(targetId);
+        if (targetSocketId) {
+          io.to(targetSocketId).emit('notification', data);
+        }
+      });
     }
   });
 

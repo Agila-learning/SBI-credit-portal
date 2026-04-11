@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api, { API_URL } from '../utils/api';
-import { io } from 'socket.io-client';
+// import { io } from 'socket.io-client'; // Removed as we use global SocketContext
 import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
 import {
   Send, Paperclip, Mic, MoreVertical, Search, Circle,
@@ -10,6 +10,7 @@ import {
   Wifi, WifiOff, ChevronDown, Smile, AlertTriangle, Trash2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const dateLabel = (date) => {
@@ -96,23 +97,17 @@ const Chat = () => {
   const audioBlobRef = useRef(null);
   const inputRef     = useRef(null);
 
-  // ── socket setup ──
+  const { socket } = useSocket();
+  
+  // Update socketRef when context socket changes
   useEffect(() => {
-    if (!user?._id) return;
-    const s = io(API_URL, { transports: ['websocket', 'polling'] });
-    socketRef.current = s;
-    s.emit('join', user._id);
+    socketRef.current = socket;
+  }, [socket]);
 
-    s.on('userStatus', ({ userId, status }) => {
-      setOnlineUsers(prev => {
-        const next = new Set(prev);
-        status === 'online' ? next.add(userId) : next.delete(userId);
-        return next;
-      });
-      setContacts(prev => prev.map(c => c._id === userId ? { ...c, _online: status === 'online' } : c));
-    });
+  useEffect(() => {
+    if (!socket) return;
 
-    s.on('receiveMessage', (msg) => {
+    socket.on('receiveMessage', (msg) => {
       // Prevent duplicate messages if added by doSend locally
       setMessages(m => {
         if (m.some(existing => existing._id === msg._id)) return m;
@@ -125,41 +120,33 @@ const Chat = () => {
         }
         return c;
       }));
-
-      setSelected(prev => {
-        if (prev && (prev._id === (msg.sender?._id || msg.sender) || prev._id === (msg.recipient?._id || msg.recipient))) {
-          // messages update is handled above
-        }
-        return prev;
-      });
     });
 
-    s.on('typing', ({ senderName }) => {
+    socket.on('typing', ({ senderName }) => {
       setTypingFrom(senderName);
       clearTimeout(typingTimer.current);
       typingTimer.current = setTimeout(() => setTypingFrom(null), 2500);
     });
 
-    s.on('stopTyping', () => setTypingFrom(null));
+    socket.on('stopTyping', () => setTypingFrom(null));
 
-    s.on('messageRead', () => {
+    socket.on('messageRead', () => {
       setMessages(prev => prev.map(m => ({ ...m, isRead: true })));
     });
 
-    s.on('messageDeleted', ({ messageId }) => {
+    socket.on('messageDeleted', ({ messageId }) => {
       setMessages(prev => prev.map(m => m._id === messageId ? { ...m, isDeleted: true, content: 'This message was deleted' } : m));
     });
 
     return () => {
-      s.off('userStatus');
-      s.off('receiveMessage');
-      s.off('typing');
-      s.off('stopTyping');
-      s.off('messageRead');
-      s.disconnect();
-      clearTimeout(typingTimer.current);
+      socket.off('userStatus');
+      socket.off('receiveMessage');
+      socket.off('typing');
+      socket.off('stopTyping');
+      socket.off('messageRead');
+      socket.off('messageDeleted');
     };
-  }, [user?._id]);
+  }, [socket, selected?._id]);
 
   // ── fetch contacts ──
   const loadContacts = useCallback(async () => {
@@ -535,20 +522,20 @@ const Chat = () => {
                               <Avatar user={msg.sender || selected} size={8} />
                             </div>
                           )}
-                          <div className={`max-w-[68%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
+                          <div className={`max-w-[75%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
                             {/* Message type badge */}
                             {badge && (
-                              <span className={`text-[9px] font-black uppercase tracking-widest border px-2 py-0.5 rounded-full mb-1 ${badge.cls}`}>
+                              <span className={`text-[9px] font-black uppercase tracking-widest border px-2 py-0.5 rounded-full mb-1.5 ${badge.cls}`}>
                                 {badge.label}
                               </span>
                             )}
 
-                            <div className={`relative px-4 py-3 rounded-2xl shadow-sm text-sm font-medium ${
+                            <div className={`relative px-5 py-4 rounded-[1.8rem] shadow-sm text-sm font-medium ${
                               msg.isBroadcast
-                                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-tl-none'
+                                ? 'bg-gradient-to-r from-indigo-600 to-blue-700 text-white rounded-tl-none'
                                 : isMine
                                   ? 'bg-[#1E3A8A] text-white rounded-br-none'
-                                  : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'
+                                  : 'bg-white text-gray-800 border border-gray-100 rounded-bl-none shadow-blue-50/50'
                             }`}>
 
                               {/* Lead Ref card */}

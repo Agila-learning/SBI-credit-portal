@@ -20,6 +20,17 @@ const createAnnouncement = async (req, res) => {
     }
 
     const announcement = await Announcement.create(payload);
+    
+    // Notify all users in real-time
+    if (req.io) {
+      req.io.emit('notification', {
+        type: 'announcement',
+        title: 'New Announcement',
+        message: announcement.title,
+        data: announcement
+      });
+    }
+
     res.status(201).json(announcement);
   } catch (error) {
     console.error("Announcement Creation Error:", error);

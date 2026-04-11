@@ -12,6 +12,7 @@ import {
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import KPICard from '../components/KPICard';
+import { useSocket } from '../context/SocketContext';
 import IncentiveSlabManager from '../components/IncentiveSlabManager';
 
 const CustomPieTooltip = ({ active, payload }) => {
@@ -51,6 +52,7 @@ const MedalBadge = ({ rank }) => {
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { socket } = useSocket();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [leaderboard, setLeaderboard] = useState([]);
@@ -85,7 +87,20 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+
+    if (socket) {
+      socket.on('notification', (notif) => {
+        // Refresh dashboard on stats update or task update
+        if (['stats_update', 'task', 'task_update', 'lead_update'].includes(notif.type)) {
+          fetchDashboardData();
+        }
+      });
+    }
+
+    return () => {
+      if (socket) socket.off('notification');
+    };
+  }, [fetchDashboardData, socket]);
 
   const handleAutoCalculate = async (empId) => {
     if (!empId) return;
