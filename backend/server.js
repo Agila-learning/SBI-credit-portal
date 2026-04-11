@@ -21,7 +21,8 @@ const startApp = async () => {
     
     // Robust Auto-seed for Admin
     const adminEmail = 'admin@sbicard.com';
-    let admin = await User.findOne({ email: adminEmail }).select('+password');
+    const adminId = 'ADMIN-001';
+    let admin = await User.findOne({ $or: [{ email: adminEmail }, { employeeId: adminId }] }).select('+password');
     
     if (!admin) {
       console.log('No admin found, creating default admin...');
@@ -30,21 +31,21 @@ const startApp = async () => {
         email: adminEmail,
         password: 'adminpassword123',
         role: 'admin',
-        employeeId: 'ADMIN-001',
+        employeeId: adminId,
         phone: '9876543210',
       });
       console.log('Default admin created successfully.');
     } else {
-      console.log('Admin user found, ensuring credentials are correct...');
-      admin.password = 'adminpassword123';
+      console.log('Admin user found, verifying...');
       admin.role = 'admin';
+      if (admin.email !== adminEmail) admin.email = adminEmail;
       await admin.save();
-      console.log('Admin credentials verified/reset.');
     }
 
     // Robust Auto-seed for Employee
     const empEmail = 'employee@sbicard.com';
-    let employee = await User.findOne({ email: empEmail }).select('+password');
+    const empId = 'EMP-001';
+    let employee = await User.findOne({ $or: [{ email: empEmail }, { employeeId: empId }] }).select('+password');
     if (!employee) {
       console.log('No sample employee found, creating...');
       await User.create({
@@ -52,21 +53,21 @@ const startApp = async () => {
         email: empEmail,
         password: 'adminpassword123',
         role: 'employee',
-        employeeId: 'EMP-001',
+        employeeId: empId,
         phone: '1234567890',
       });
       console.log('Sample employee created.');
     } else {
-      console.log('Sample employee found, ensuring credentials are correct...');
-      employee.password = 'adminpassword123';
+      console.log('Sample employee found, verifying...');
       employee.role = 'employee';
+      if (employee.email !== empEmail) employee.email = empEmail;
       await employee.save();
-      console.log('Employee credentials verified/reset.');
     }
     
     // Robust Auto-seed for Team Leader
     const tlEmail = 'leader@sbicard.com';
-    let teamLeader = await User.findOne({ email: tlEmail }).select('+password');
+    const tlId = 'TL-001';
+    let teamLeader = await User.findOne({ $or: [{ email: tlEmail }, { employeeId: tlId }] }).select('+password');
     if (!teamLeader) {
       console.log('No sample team leader found, creating...');
       await User.create({
@@ -74,16 +75,15 @@ const startApp = async () => {
         email: tlEmail,
         password: 'adminpassword123',
         role: 'team_leader',
-        employeeId: 'TL-001',
+        employeeId: tlId,
         phone: '1231231234',
       });
       console.log('Sample team leader created.');
     } else {
-      console.log('Sample team leader found, ensuring credentials are correct...');
-      teamLeader.password = 'adminpassword123';
+      console.log('Sample team leader found, verifying...');
       teamLeader.role = 'team_leader';
+      if (teamLeader.email !== tlEmail) teamLeader.email = tlEmail;
       await teamLeader.save();
-      console.log('Team Leader credentials verified/reset.');
     }
 
     const { setupDailyLeaderboardSnapshot } = require('./src/utils/scheduler');
