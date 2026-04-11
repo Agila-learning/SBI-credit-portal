@@ -129,7 +129,7 @@ const Leads = () => {
     setBatchLeads(updated);
 
     try {
-      const res = await axios.get(`http://localhost:5052/api/leads/mobile/${mobile}`);
+      const res = await api.get(`/api/leads/mobile/${mobile}`);
       const leadData = res.data;
       
       const nextLeads = [...batchLeads];

@@ -132,7 +132,7 @@ const Tasks = () => {
              Task Management
           </h1>
           <p className="text-gray-500 font-medium italic">
-            {isAdmin ? 'Assign performance targets and monitor team execution' : 'Track your active assignments and performance targets'}
+            {isAdminOrTL ? 'Assign performance targets and monitor team execution' : 'Track your active assignments and performance targets'}
           </p>
         </div>
         {isAdminOrTL && (

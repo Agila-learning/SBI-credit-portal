@@ -33,7 +33,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get('http://localhost:5052/api/users/profile');
+        const res = await api.get('/api/users/profile');
         setFormData({
           name: res.data.name || '',
           email: res.data.email || '',

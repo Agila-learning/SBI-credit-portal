@@ -69,6 +69,7 @@ const QUICK_MESSAGES = [
 // ─── main component ──────────────────────────────────────────────────────────
 const Chat = () => {
   const { user } = useAuth();
+  const isAdminOrTL = user?.role === 'admin' || user?.role === 'team_leader';
   const isAdmin = user?.role === 'admin';
 
   const [contacts, setContacts]         = useState([]);
@@ -99,7 +100,7 @@ const Chat = () => {
   // ── socket setup ──
   useEffect(() => {
     if (!user?._id) return;
-    const s = io('http://localhost:5052', { transports: ['websocket', 'polling'] });
+    const s = io(API_URL, { transports: ['websocket', 'polling'] });
     socketRef.current = s;
     s.emit('join', user._id);
 
@@ -228,7 +229,7 @@ const Chat = () => {
         fileUrl,
         leadRef,
       };
-      const res = await axios.post('http://localhost:5052/api/chat', payload);
+      const res = await api.post('/api/chat', payload);
       const saved = res.data;
 
       setMessages(prev => {
@@ -257,7 +258,7 @@ const Chat = () => {
   const handleDeleteMessage = async (msgId) => {
     if (!window.confirm('Delete this message?')) return;
     try {
-      await axios.delete(`http://localhost:5052/api/chat/${msgId}`);
+      await api.delete(`/api/chat/${msgId}`);
       setMessages(prev => prev.map(m => m._id === msgId ? { ...m, isDeleted: true, content: 'This message was deleted' } : m));
       // relay via socket
       socketRef.current?.emit('deleteMessage', { messageId: msgId, recipientId: selected._id });
@@ -276,7 +277,7 @@ const Chat = () => {
     if (!broadcastText.trim()) return;
     setSending(true);
     try {
-      await axios.post('http://localhost:5052/api/chat', {
+      await api.post('/api/chat', {
         content: broadcastText.trim(),
         messageType: broadcastType,
         isBroadcast: true,
@@ -306,7 +307,7 @@ const Chat = () => {
     fd.append('file', file);
     setUploadProgress(true);
     try {
-      const res = await axios.post('http://localhost:5052/api/upload', fd);
+      const res = await api.post('/api/upload', fd);
       const type = file.type.startsWith('image/') ? 'image' : 'file';
       await doSend(file.name, type, res.data.fileUrl);
     } catch (e) { console.error(e); }
@@ -324,7 +325,7 @@ const Chat = () => {
         const blob = new Blob(chunks, { type: 'audio/webm' });
         const fd = new FormData();
         fd.append('file', new File([blob], `voice-${Date.now()}.webm`));
-        const res = await axios.post('http://localhost:5052/api/upload', fd);
+        const res = await api.post('/api/upload', fd);
         await doSend('Voice message', 'voice', res.data.fileUrl);
       };
       mr.start();
@@ -353,7 +354,7 @@ const Chat = () => {
   const totalUnread = contacts.reduce((n, c) => n + (c.unreadCount || 0), 0);
 
   return (
-    <div className="flex h-[calc(100vh-96px)] rounded-3xl shadow-2xl border border-gray-100 overflow-hidden bg-white" style={{ minHeight: 500 }}>
+    <div className="flex h-[calc(100vh-140px)] md:h-[calc(100vh-120px)] rounded-3xl shadow-2xl border border-gray-100 overflow-hidden bg-white mx-auto max-w-[1600px]" style={{ minHeight: 450 }}>
 
       {/* ═══════════════════ LEFT — CONTACTS ═══════════════════ */}
       <aside className="w-80 flex flex-col border-r border-gray-100 bg-[#F8FAFC] shrink-0">
@@ -370,7 +371,7 @@ const Chat = () => {
               <button onClick={loadContacts} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all" title="Refresh">
                 <RefreshCw size={15} />
               </button>
-              {isAdmin && (
+              {isAdminOrTL && (
                 <button
                   onClick={() => setShowBroadcast(true)}
                   className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md shadow-blue-200"
@@ -468,7 +469,7 @@ const Chat = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {isAdmin && (
+                {isAdminOrTL && (
                   <button
                     onClick={() => { setBroadcastText(''); setShowBroadcast(true); }}
                     className="flex items-center gap-1 px-3 py-2 bg-purple-50 text-purple-600 border border-purple-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-100 transition-all"
@@ -637,7 +638,7 @@ const Chat = () => {
             </div>
 
             {/* Message type selector */}
-            {isAdmin && (
+            {isAdminOrTL && (
               <div className="px-6 pt-3 bg-white flex items-center gap-2">
                 {[
                   { value: 'text', label: 'Message', icon: '💬' },
@@ -775,7 +776,7 @@ const Chat = () => {
           </div>
 
           {/* Quick Actions */}
-          {isAdmin && (
+          {isAdminOrTL && (
             <div className="p-4 border-b border-gray-100 bg-white">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Quick Actions</p>
               <div className="space-y-2">

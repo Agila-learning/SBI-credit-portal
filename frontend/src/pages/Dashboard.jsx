@@ -578,7 +578,7 @@ const Dashboard = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 relative z-10">
-                    {user?.role === 'admin' ? (
+                    {(user?.role === 'admin' || user?.role === 'team_leader') ? (
                       <div className="space-y-3">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-3">Select Employee</label>
                         <select 

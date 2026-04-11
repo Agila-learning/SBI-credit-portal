@@ -61,18 +61,22 @@ const getDashboardStats = async (req, res) => {
     const overallInteractions = await Interaction.countDocuments(empQuery);
 
     let teamStats = [];
-    if (req.user.role === 'admin') {
-      const employees = await User.find({ role: 'employee' }).select('name employeeId');
+    if (req.user.role === 'admin' || req.user.role === 'team_leader') {
+      const employees = await User.find({ 
+        role: { $in: ['employee', 'team_leader'] } 
+      }).select('name employeeId');
+      
       teamStats = await Promise.all(employees.map(async (emp) => {
         const empReports = await DailyReport.find({ employee: emp._id });
         const summary = empReports.reduce((acc, curr) => ({
-          called: acc.called + curr.counts.callsDone,
-          selected: acc.selected + curr.counts.selected,
-          rejected: acc.rejected + curr.counts.rejected,
-          dispatched: acc.dispatched + curr.counts.dispatched
+          called: acc.called + (curr.counts?.callsDone || 0),
+          selected: acc.selected + (curr.counts?.selected || 0),
+          rejected: acc.rejected + (curr.counts?.rejected || 0),
+          dispatched: acc.dispatched + (curr.counts?.dispatched || 0)
         }), { called: 0, selected: 0, rejected: 0, dispatched: 0 });
 
         return {
+          _id: emp._id,
           name: emp.name,
           employeeId: emp.employeeId,
           counts: summary

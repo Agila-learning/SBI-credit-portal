@@ -192,7 +192,7 @@ const Announcements = () => {
                </div>
             </div>
 
-            <form onSubmit={handleCreate} className="p-12 space-y-8">
+            <form onSubmit={handleCreate} className="p-12 space-y-8 overflow-y-auto max-h-[70vh] custom-scrollbar">
                <div className="space-y-3">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Update Headline</label>
                   <input 
