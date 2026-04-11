@@ -5,10 +5,19 @@ const User = require('../models/User');
 // @access  Private/Admin
 const getEmployees = async (req, res) => {
   try {
-    const employees = await User.find({ 
-      role: 'employee',
-      isDeleted: false 
-    }).select('-password').sort('-createdAt');
+    let query = { isDeleted: false };
+    
+    // Team Leader only sees their assigned employees
+    if (req.user.role === 'team_leader') {
+      query.reportingTo = req.user._id;
+    } else if (req.user.role === 'admin') {
+      // Admin sees everyone except themselves maybe, or all active
+    }
+
+    const employees = await User.find(query)
+      .populate('reportingTo', 'name employeeId')
+      .select('-password')
+      .sort('-createdAt');
     res.json(employees);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -30,6 +39,7 @@ const updateEmployee = async (req, res) => {
     user.location = req.body.location || user.location;
     user.status = req.body.status || user.status;
     user.role = req.body.role || user.role;
+    user.reportingTo = req.body.reportingTo || user.reportingTo;
 
     if (req.body.password) {
       user.password = req.body.password;

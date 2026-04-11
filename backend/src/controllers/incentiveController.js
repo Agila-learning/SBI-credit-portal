@@ -9,7 +9,11 @@ const { format, startOfMonth, endOfMonth } = require('date-fns');
 const getIncentives = async (req, res) => {
   try {
     let query = {};
-    if (req.user.role === 'employee') {
+    if (req.user.role === 'team_leader') {
+      const reports = await User.find({ reportingTo: req.user._id }).select('_id');
+      const reportIds = [req.user._id, ...reports.map(r => r._id)];
+      query.employee = { $in: reportIds };
+    } else if (req.user.role === 'employee') {
       query.employee = req.user._id;
     }
 

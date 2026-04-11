@@ -22,13 +22,12 @@ const Profile = () => {
     name: '',
     email: '',
     phone: '',
-    bio: '',
-    profilePicture: ''
+    bio: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  const [profilePicture, setProfilePicture] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -38,9 +37,9 @@ const Profile = () => {
           name: res.data.name || '',
           email: res.data.email || '',
           phone: res.data.phone || '',
-          bio: res.data.bio || '',
-          profilePicture: res.data.profilePicture || ''
+          bio: res.data.bio || ''
         });
+        setProfilePicture(res.data.profilePicture || '');
       } catch (error) {
         console.error("Error fetching profile", error);
       } finally {
@@ -50,24 +49,6 @@ const Profile = () => {
     fetchProfile();
   }, []);
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const data = new FormData();
-    data.append('file', file);
-
-    setUploading(true);
-    try {
-      const res = await api.post('/api/upload', data);
-      setFormData({ ...formData, profilePicture: res.data.fileUrl });
-      setMessage({ type: 'success', text: 'Photo uploaded! Don\'t forget to save changes.' });
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Upload failed' });
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -102,9 +83,9 @@ const Profile = () => {
           <div className="flex flex-col md:flex-row items-end gap-6 -mt-20 relative z-10">
             <div className="relative group">
               <div className="w-40 h-40 rounded-[2.5rem] bg-white p-2 shadow-2xl">
-                {formData.profilePicture ? (
+                {profilePicture ? (
                   <img 
-                    src={formData.profilePicture} 
+                    src={profilePicture} 
                     alt="Profile" 
                     className="w-full h-full rounded-[2rem] object-cover"
                   />
@@ -114,10 +95,6 @@ const Profile = () => {
                   </div>
                 )}
               </div>
-              <label className="absolute bottom-2 right-2 p-3 bg-sbi-blue text-white rounded-2xl shadow-xl cursor-pointer hover:scale-110 active:scale-95 transition-all">
-                <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
-                {uploading ? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
-              </label>
             </div>
             
             <div className="flex-1 mb-4">

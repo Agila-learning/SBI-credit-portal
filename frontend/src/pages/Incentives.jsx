@@ -15,9 +15,11 @@ import {
 } from 'lucide-react';
 import { format, startOfMonth, lastDayOfMonth } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Incentives = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [slabs, setSlabs] = useState([]);
@@ -246,7 +248,10 @@ const Incentives = () => {
             </div>
 
             {/* Support/Faq links */}
-            <div className="bg-[#1E3A8A] p-8 rounded-[3rem] text-white flex items-center justify-between group cursor-pointer hover:bg-blue-700 transition-all">
+            <div 
+              onClick={() => navigate('/chat')}
+              className="bg-[#1E3A8A] p-8 rounded-[3rem] text-white flex items-center justify-between group cursor-pointer hover:bg-blue-700 transition-all"
+            >
                <div>
                  <p className="text-[9px] font-black uppercase tracking-widest text-blue-300">Issue with payout?</p>
                  <h4 className="text-lg font-black leading-tight">Contact Audit Cell</h4>

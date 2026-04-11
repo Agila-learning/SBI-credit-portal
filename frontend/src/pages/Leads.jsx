@@ -13,6 +13,7 @@ import {
   X,
   AlertCircle,
   Clock,
+  Minus,
   Phone,
   PhoneCall,
   MapPin,
@@ -440,43 +441,75 @@ const Leads = () => {
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Total Calls Done</label>
-                      <input 
-                        type="number" 
-                        min="0"
-                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 focus:bg-white outline-none transition-all font-black text-xl text-sbi-blue"
-                        value={batchCounts.callsDone}
-                        onChange={(e) => setBatchCounts({...batchCounts, callsDone: parseInt(e.target.value) || 0})}
-                      />
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setBatchCounts(p => ({...p, callsDone: Math.max(0, p.callsDone - 1)}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all shrink-0">
+                          <Minus size={16} />
+                        </button>
+                        <input 
+                          type="number" 
+                          min="0"
+                          className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 focus:bg-white outline-none transition-all font-black text-xl text-sbi-blue text-center"
+                          value={batchCounts.callsDone}
+                          onChange={(e) => setBatchCounts({...batchCounts, callsDone: parseInt(e.target.value) || 0})}
+                        />
+                        <button onClick={() => setBatchCounts(p => ({...p, callsDone: p.callsDone + 1}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all shrink-0">
+                          <Plus size={16} />
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 text-green-500">Selected / Shortlisted</label>
-                      <input 
-                        type="number" 
-                        min="0"
-                        className="w-full px-6 py-4 bg-green-50/50 border border-green-100 rounded-2xl focus:ring-4 focus:ring-green-50 focus:bg-white outline-none transition-all font-black text-xl text-green-600"
-                        value={batchCounts.selected}
-                        onChange={(e) => setBatchCounts({...batchCounts, selected: parseInt(e.target.value) || 0})}
-                      />
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setBatchCounts(p => ({...p, selected: Math.max(0, p.selected - 1)}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-green-600 hover:text-white transition-all shrink-0">
+                          <Minus size={16} />
+                        </button>
+                        <input 
+                          type="number" 
+                          min="0"
+                          className="w-full px-6 py-4 bg-green-50/50 border border-green-100 rounded-2xl focus:ring-4 focus:ring-green-50 focus:bg-white outline-none transition-all font-black text-xl text-green-600 text-center"
+                          value={batchCounts.selected}
+                          onChange={(e) => setBatchCounts({...batchCounts, selected: parseInt(e.target.value) || 0})}
+                        />
+                        <button onClick={() => setBatchCounts(p => ({...p, selected: p.selected + 1}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-green-600 hover:text-white transition-all shrink-0">
+                          <Plus size={16} />
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 text-red-500">Rejected Count</label>
-                      <input 
-                        type="number" 
-                        min="0"
-                        className="w-full px-6 py-4 bg-red-50/50 border border-red-100 rounded-2xl focus:ring-4 focus:ring-red-50 focus:bg-white outline-none transition-all font-black text-xl text-red-600"
-                        value={batchCounts.rejected}
-                        onChange={(e) => setBatchCounts({...batchCounts, rejected: parseInt(e.target.value) || 0})}
-                      />
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setBatchCounts(p => ({...p, rejected: Math.max(0, p.rejected - 1)}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-red-500 hover:text-white transition-all shrink-0">
+                          <Minus size={16} />
+                        </button>
+                        <input 
+                          type="number" 
+                          min="0"
+                          className="w-full px-6 py-4 bg-red-50/50 border border-red-100 rounded-2xl focus:ring-4 focus:ring-red-50 focus:bg-white outline-none transition-all font-black text-xl text-red-600 text-center"
+                          value={batchCounts.rejected}
+                          onChange={(e) => setBatchCounts({...batchCounts, rejected: parseInt(e.target.value) || 0})}
+                        />
+                        <button onClick={() => setBatchCounts(p => ({...p, rejected: p.rejected + 1}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-red-500 hover:text-white transition-all shrink-0">
+                          <Plus size={16} />
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 text-orange-500">Dispatched Count</label>
-                      <input 
-                        type="number" 
-                        min="0"
-                        className="w-full px-6 py-4 bg-orange-50/50 border border-orange-100 rounded-2xl focus:ring-4 focus:ring-orange-50 focus:bg-white outline-none transition-all font-black text-xl text-orange-600"
-                        value={batchCounts.dispatched}
-                        onChange={(e) => setBatchCounts({...batchCounts, dispatched: parseInt(e.target.value) || 0})}
-                      />
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setBatchCounts(p => ({...p, dispatched: Math.max(0, p.dispatched - 1)}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-orange-500 hover:text-white transition-all shrink-0">
+                          <Minus size={16} />
+                        </button>
+                        <input 
+                          type="number" 
+                          min="0"
+                          className="w-full px-6 py-4 bg-orange-50/50 border border-orange-100 rounded-2xl focus:ring-4 focus:ring-orange-50 focus:bg-white outline-none transition-all font-black text-xl text-orange-600 text-center"
+                          value={batchCounts.dispatched}
+                          onChange={(e) => setBatchCounts({...batchCounts, dispatched: parseInt(e.target.value) || 0})}
+                        />
+                        <button onClick={() => setBatchCounts(p => ({...p, dispatched: p.dispatched + 1}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-orange-500 hover:text-white transition-all shrink-0">
+                          <Plus size={16} />
+                        </button>
+                      </div>
                     </div>
                   </div>
 

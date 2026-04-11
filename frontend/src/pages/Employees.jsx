@@ -38,6 +38,7 @@ const Employees = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [joiningMonthFilter, setJoiningMonthFilter] = useState('all');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [teamLeaders, setTeamLeaders] = useState([]);
   const [errors, setErrors] = useState({});
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -50,7 +51,8 @@ const Employees = () => {
     employeeId: '',
     phone: '',
     location: '',
-    status: 'active'
+    status: 'active',
+    reportingTo: ''
   });
 
   const fetchEmployees = async () => {
@@ -58,6 +60,7 @@ const Employees = () => {
       setLoading(true);
       const res = await api.get('/api/employees');
       setEmployees(res.data);
+      setTeamLeaders(res.data.filter(e => e.role === 'team_leader'));
     } catch (error) {
       console.error("Error fetching employees", error);
     } finally {
@@ -78,7 +81,8 @@ const Employees = () => {
       employeeId: '',
       phone: '',
       location: '',
-      status: 'active'
+      status: 'active',
+      reportingTo: ''
     });
     setErrors({});
     setSelectedEmployee(null);
@@ -101,7 +105,8 @@ const Employees = () => {
       employeeId: emp.employeeId,
       phone: emp.phone || '',
       location: emp.location || '',
-      status: emp.status || 'active'
+      status: emp.status || 'active',
+      reportingTo: emp.reportingTo?._id || emp.reportingTo || ''
     });
     setShowModal(true);
   };
@@ -426,6 +431,22 @@ const Employees = () => {
                     <option value="admin">Platform Administrator</option>
                   </select>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Reports To (Team Leader)</label>
+                  <select 
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 focus:bg-white outline-none transition-all font-black text-xs uppercase tracking-widest"
+                    value={formData.reportingTo}
+                    onChange={(e) => setFormData({...formData, reportingTo: e.target.value})}
+                  >
+                    <option value="">No Team Leader</option>
+                    {teamLeaders.map(tl => (
+                      <option key={tl._id} value={tl._id}>{tl.name.toUpperCase()} ({tl.employeeId})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Assigned Territory</label>
                   <input 

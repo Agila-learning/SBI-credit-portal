@@ -45,13 +45,18 @@ const createTask = async (req, res) => {
 const getTasks = async (req, res) => {
   try {
     let query = {};
-    if (req.user.role !== 'admin') {
+    if (req.user.role === 'team_leader') {
+      const reports = await User.find({ reportingTo: req.user._id }).select('_id');
+      const reportIds = reports.map(r => r._id);
       query = { 
         $or: [
           { assignedTo: req.user._id },
-          { createdBy: req.user._id }
+          { createdBy: req.user._id },
+          { assignedTo: { $in: reportIds } }
         ]
       };
+    } else if (req.user.role === 'employee') {
+      query = { assignedTo: req.user._id };
     }
 
     const tasks = await Task.find(query)

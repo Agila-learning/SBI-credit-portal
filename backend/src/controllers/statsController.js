@@ -21,7 +21,11 @@ const getDashboardStats = async (req, res) => {
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
     let empQuery = {};
-    if (req.user.role !== 'admin') {
+    if (req.user.role === 'team_leader') {
+      const reports = await User.find({ reportingTo: req.user._id }).select('_id');
+      const reportIds = [req.user._id, ...reports.map(r => r._id)];
+      empQuery.employee = { $in: reportIds };
+    } else if (req.user.role === 'employee') {
       empQuery.employee = req.user._id;
     }
 
@@ -62,9 +66,14 @@ const getDashboardStats = async (req, res) => {
 
     let teamStats = [];
     if (req.user.role === 'admin' || req.user.role === 'team_leader') {
-      const employees = await User.find({ 
-        role: { $in: ['employee', 'team_leader'] } 
-      }).select('name employeeId');
+      let teamQuery = { isDeleted: false };
+      if (req.user.role === 'team_leader') {
+        teamQuery.reportingTo = req.user._id;
+      } else {
+        teamQuery.role = { $in: ['employee', 'team_leader'] };
+      }
+
+      const employees = await User.find(teamQuery).select('name employeeId');
       
       teamStats = await Promise.all(employees.map(async (emp) => {
         const empReports = await DailyReport.find({ employee: emp._id });
@@ -221,9 +230,16 @@ const getLeaderboard = async (req, res) => {
       }
     }
 
+    let matchFilter = { ...dateFilter };
+    if (req.user.role === 'team_leader') {
+      const reports = await User.find({ reportingTo: req.user._id }).select('_id');
+      const reportIds = [req.user._id, ...reports.map(r => r._id)];
+      matchFilter.employee = { $in: reportIds };
+    }
+
     // Default to aggregation for live periods (weekly, monthly, or if no history found)
     const leaderboard = await DailyReport.aggregate([
-      { $match: dateFilter },
+      { $match: matchFilter },
       {
         $group: {
           _id: '$employee',

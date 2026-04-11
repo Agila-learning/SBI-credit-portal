@@ -47,6 +47,7 @@ const getAnnouncements = async (req, res) => {
       isActive: true,
       $or: [
         { expiresAt: { $exists: false } },
+        { expiresAt: null },
         { expiresAt: { $gt: new Date() } }
       ]
     })

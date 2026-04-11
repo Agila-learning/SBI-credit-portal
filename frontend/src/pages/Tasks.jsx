@@ -53,10 +53,10 @@ const Tasks = () => {
       setLoading(true);
       const [taskRes, empRes] = await Promise.all([
         api.get('/api/tasks'),
-        user.role === 'admin' ? api.get('/api/employees') : Promise.resolve({ data: [] })
+        isAdminOrTL ? api.get('/api/employees') : Promise.resolve({ data: [] })
       ]);
       setTasks(taskRes.data);
-      if (user.role === 'admin') setEmployees(empRes.data);
+      if (isAdminOrTL) setEmployees(empRes.data);
     } catch (error) {
       console.error("Error fetching tasks", error);
     } finally {

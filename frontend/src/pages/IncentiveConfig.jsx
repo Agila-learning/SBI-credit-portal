@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   Zap,
-  DollarSign
+  DollarSign,
+  Minus
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -232,23 +233,39 @@ const IncentiveConfig = () => {
                 <div className="grid grid-cols-2 gap-8">
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Min Dispatched Cards</label>
-                    <input 
-                      required 
-                      type="number" 
-                      className="w-full px-8 py-5 bg-gray-50 border border-transparent rounded-[1.5rem] font-black text-gray-800 outline-none focus:ring-4 focus:ring-blue-50 transition-all"
-                      value={formData.minCards}
-                      onChange={(e) => setFormData({...formData, minCards: parseInt(e.target.value) || 0})}
-                    />
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={() => setFormData(p => ({...p, minCards: Math.max(0, p.minCards - 1)}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all shrink-0">
+                        <Minus size={16} />
+                      </button>
+                      <input 
+                        required 
+                        type="number" 
+                        className="w-full px-4 py-5 bg-gray-50 border border-transparent rounded-[1.5rem] font-black text-gray-800 outline-none focus:ring-4 focus:ring-blue-50 transition-all text-center"
+                        value={formData.minCards}
+                        onChange={(e) => setFormData({...formData, minCards: parseInt(e.target.value) || 0})}
+                      />
+                      <button type="button" onClick={() => setFormData(p => ({...p, minCards: p.minCards + 1}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all shrink-0">
+                        <Plus size={16} />
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Max Dispatched Cards</label>
-                    <input 
-                      required 
-                      type="number" 
-                      className="w-full px-8 py-5 bg-gray-50 border border-transparent rounded-[1.5rem] font-black text-gray-800 outline-none focus:ring-4 focus:ring-blue-50 transition-all"
-                      value={formData.maxCards}
-                      onChange={(e) => setFormData({...formData, maxCards: parseInt(e.target.value) || 0})}
-                    />
+                    <div className="flex items-center gap-2">
+                       <button type="button" onClick={() => setFormData(p => ({...p, maxCards: Math.max(0, p.maxCards - 1)}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all shrink-0">
+                        <Minus size={16} />
+                      </button>
+                      <input 
+                        required 
+                        type="number" 
+                        className="w-full px-4 py-5 bg-gray-50 border border-transparent rounded-[1.5rem] font-black text-gray-800 outline-none focus:ring-4 focus:ring-blue-50 transition-all text-center"
+                        value={formData.maxCards}
+                        onChange={(e) => setFormData({...formData, maxCards: parseInt(e.target.value) || 0})}
+                      />
+                      <button type="button" onClick={() => setFormData(p => ({...p, maxCards: p.maxCards + 1}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all shrink-0">
+                        <Plus size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
 

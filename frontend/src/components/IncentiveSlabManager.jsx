@@ -51,7 +51,7 @@ const IncentiveSlabManager = () => {
   const deleteSlab = async (id) => {
     if (!window.confirm('Remove this slab?')) return;
     try {
-      await axios.delete(`http://localhost:5052/api/slabs/${id}`);
+      await api.delete(`/api/slabs/${id}`);
       fetchSlabs();
     } catch (e) { console.error(e); }
   };

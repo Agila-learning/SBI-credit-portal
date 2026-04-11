@@ -333,8 +333,8 @@ const Chat = () => {
   }, {});
 
   const filteredContacts = contacts.filter(c =>
-    c.name.toLowerCase().includes(searchQ.toLowerCase()) ||
-    (c.employeeId || '').toLowerCase().includes(searchQ.toLowerCase())
+    (c.name?.toLowerCase() || '').includes(searchQ.toLowerCase()) ||
+    (c.employeeId?.toLowerCase() || '').includes(searchQ.toLowerCase())
   );
 
   const totalUnread = contacts.reduce((n, c) => n + (c.unreadCount || 0), 0);

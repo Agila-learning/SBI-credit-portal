@@ -4,7 +4,7 @@ const { getSlabs, createSlab, updateSlab, deleteSlab } = require('../controllers
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.route('/')
-  .get(protect, authorize('admin'), getSlabs)
+  .get(protect, getSlabs)
   .post(protect, authorize('admin'), createSlab);
 
 router.route('/:id')
