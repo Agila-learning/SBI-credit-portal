@@ -6,6 +6,7 @@ const {
   getLeads,
   updateLead,
   deleteLead,
+  bulkUpload,
 } = require('../controllers/leadController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
