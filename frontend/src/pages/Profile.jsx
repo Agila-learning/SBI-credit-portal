@@ -27,7 +27,6 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
-  const [profilePicture, setProfilePicture] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -39,7 +38,6 @@ const Profile = () => {
           phone: res.data.phone || '',
           bio: res.data.bio || ''
         });
-        setProfilePicture(res.data.profilePicture || '');
       } catch (error) {
         console.error("Error fetching profile", error);
       } finally {
@@ -80,22 +78,7 @@ const Profile = () => {
            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_white_1px,_transparent_1px)] bg-[size:20px_20px]"></div>
         </div>
         <div className="px-10 pb-10 relative">
-          <div className="flex flex-col md:flex-row items-end gap-6 -mt-20 relative z-10">
-            <div className="relative group">
-              <div className="w-40 h-40 rounded-[2.5rem] bg-white p-2 shadow-2xl">
-                {profilePicture ? (
-                  <img 
-                    src={profilePicture} 
-                    alt="Profile" 
-                    className="w-full h-full rounded-[2rem] object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full rounded-[2rem] bg-gray-100 flex items-center justify-center text-gray-300">
-                    <UserIcon size={60} />
-                  </div>
-                )}
-              </div>
-            </div>
+          <div className="flex flex-col md:flex-row items-end gap-6 -mt-10 relative z-10">
             
             <div className="flex-1 mb-4">
               <h1 className="text-3xl font-black text-gray-900 tracking-tight">{formData.name}</h1>

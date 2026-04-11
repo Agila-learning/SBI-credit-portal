@@ -94,7 +94,9 @@ const Chat = () => {
   const scrollRef    = useRef(null);
   const typingTimer  = useRef(null);
   const mediaRecRef  = useRef(null);
+  const streamRef    = useRef(null);
   const audioBlobRef = useRef(null);
+  const activeAudioRef = useRef(null);
   const inputRef     = useRef(null);
 
   const { socket } = useSocket();
@@ -304,6 +306,7 @@ const Chat = () => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       const mr = new MediaRecorder(stream);
       const chunks = [];
       mr.ondataavailable = e => chunks.push(e.data);
@@ -313,6 +316,8 @@ const Chat = () => {
         fd.append('file', new File([blob], `voice-${Date.now()}.webm`));
         const res = await api.post('/api/upload', fd);
         await doSend('Voice message', 'voice', res.data.fileUrl);
+        // Stop all tracks to turn off the mic light
+        stream.getTracks().forEach(track => track.stop());
       };
       mr.start();
       mediaRecRef.current = mr;
@@ -321,7 +326,9 @@ const Chat = () => {
   };
 
   const stopRecording = () => {
-    mediaRecRef.current?.stop();
+    if (mediaRecRef.current && mediaRecRef.current.state !== 'inactive') {
+      mediaRecRef.current.stop();
+    }
     setIsRecording(false);
   };
 
@@ -332,12 +339,15 @@ const Chat = () => {
     return groups;
   }, {});
 
-  const filteredContacts = contacts.filter(c =>
-    (c.name?.toLowerCase() || '').includes(searchQ.toLowerCase()) ||
-    (c.employeeId?.toLowerCase() || '').includes(searchQ.toLowerCase())
-  );
+  const filteredContacts = (contacts || []).filter(c => {
+    if (!c) return false;
+    const safeSearch = (searchQ || '').toLowerCase();
+    const nameMatch = (c.name || '').toLowerCase().includes(safeSearch);
+    const idMatch = (c.employeeId || '').toLowerCase().includes(safeSearch);
+    return nameMatch || idMatch;
+  });
 
-  const totalUnread = contacts.reduce((n, c) => n + (c.unreadCount || 0), 0);
+  const totalUnread = (contacts || []).reduce((n, c) => n + (c?.unreadCount || 0), 0);
 
   return (
     <div className="flex h-[calc(100vh-140px)] md:h-[calc(100vh-120px)] rounded-3xl shadow-2xl border border-gray-100 overflow-hidden bg-white mx-auto max-w-[1600px]" style={{ minHeight: 450 }}>
@@ -560,16 +570,36 @@ const Chat = () => {
                                 <img src={msg.fileUrl} className="max-w-full rounded-xl shadow-md" alt="attachment" />
                               )}
 
-                              {/* Voice */}
+                              {/* Voice - Inline Playback */}
                               {msg.messageType === 'voice' && (
-                                <div className="flex items-center gap-3 min-w-[140px]">
-                                  <a href={msg.fileUrl} target="_blank" rel="noreferrer" className="p-2 bg-white/20 rounded-xl hover:bg-white/30 transition-all">
+                                <div className="flex items-center gap-3 min-w-[200px] py-1">
+                                  <button 
+                                    onClick={() => {
+                                      if (activeAudioRef.current) {
+                                        activeAudioRef.current.pause();
+                                        if (activeAudioRef.current.src === msg.fileUrl) {
+                                          activeAudioRef.current = null;
+                                          return;
+                                        }
+                                      }
+                                      const audio = new Audio(msg.fileUrl);
+                                      activeAudioRef.current = audio;
+                                      audio.play();
+                                      audio.onended = () => { activeAudioRef.current = null; };
+                                    }}
+                                    className="w-10 h-10 flex items-center justify-center bg-white/20 rounded-full hover:bg-white/30 transition-all shadow-inner"
+                                  >
                                     <Play size={16} fill="currentColor" />
-                                  </a>
-                                  <div className="flex-1 h-1.5 bg-white/30 rounded-full">
-                                    <div className="h-full w-1/3 bg-white/70 rounded-full" />
+                                  </button>
+                                  <div className="flex-1 flex flex-col gap-1">
+                                    <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest opacity-60">
+                                      <span>Voice Note</span>
+                                      <span>0:00</span>
+                                    </div>
+                                    <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                                      <div className="h-full w-0 bg-white/60 rounded-full" />
+                                    </div>
                                   </div>
-                                  <span className="text-[10px] font-black opacity-70">VOICE</span>
                                 </div>
                               )}
 
