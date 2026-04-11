@@ -27,7 +27,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Tasks = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdminOrTL = user?.role === 'admin' || user?.role === 'team_leader';
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -135,7 +135,7 @@ const Tasks = () => {
             {isAdmin ? 'Assign performance targets and monitor team execution' : 'Track your active assignments and performance targets'}
           </p>
         </div>
-        {isAdmin && (
+        {isAdminOrTL && (
           <button 
             onClick={() => setShowModal(true)}
             className="flex items-center gap-3 px-8 py-4 text-white sbi-gradient rounded-[1.8rem] font-black uppercase tracking-widest text-xs hover:opacity-90 shadow-2xl shadow-blue-200 transition-all active:scale-95"
@@ -146,8 +146,8 @@ const Tasks = () => {
         )}
       </div>
 
-      {/* Analytics Row (Admin Only) */}
-      {isAdmin && (
+      {/* Analytics Row (Admin/TL Only) */}
+      {isAdminOrTL && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Assigned</p>
@@ -264,7 +264,7 @@ const Tasks = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {!isAdmin && task.status !== 'Completed' && task.targetCount > 0 && (
+                  {!isAdminOrTL && task.status !== 'Completed' && task.targetCount > 0 && (
                     <button 
                       onClick={() => handleUpdateProgress(task._id, task.achievedCount)}
                       className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-[#1E3A8A] rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 shadow-sm transition-all active:scale-95"

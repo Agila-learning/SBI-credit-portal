@@ -63,6 +63,28 @@ const startApp = async () => {
       await employee.save();
       console.log('Employee credentials verified/reset.');
     }
+    
+    // Robust Auto-seed for Team Leader
+    const tlEmail = 'leader@sbicard.com';
+    let teamLeader = await User.findOne({ email: tlEmail }).select('+password');
+    if (!teamLeader) {
+      console.log('No sample team leader found, creating...');
+      await User.create({
+        name: 'Senior Team Leader',
+        email: tlEmail,
+        password: 'adminpassword123',
+        role: 'team_leader',
+        employeeId: 'TL-001',
+        phone: '1231231234',
+      });
+      console.log('Sample team leader created.');
+    } else {
+      console.log('Sample team leader found, ensuring credentials are correct...');
+      teamLeader.password = 'adminpassword123';
+      teamLeader.role = 'team_leader';
+      await teamLeader.save();
+      console.log('Team Leader credentials verified/reset.');
+    }
 
     const { setupDailyLeaderboardSnapshot } = require('./src/utils/scheduler');
     setupDailyLeaderboardSnapshot();

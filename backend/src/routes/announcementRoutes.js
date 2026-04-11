@@ -7,9 +7,9 @@ router.use(protect);
 
 router.route('/')
   .get(getAnnouncements)
-  .post(authorize('admin'), createAnnouncement);
+  .post(authorize('admin', 'team_leader'), createAnnouncement);
 
 router.route('/:id')
-  .delete(authorize('admin'), deleteAnnouncement);
+  .delete(authorize('admin', 'team_leader'), deleteAnnouncement);
 
 module.exports = router;

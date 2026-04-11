@@ -4,7 +4,7 @@ const { getEmployees, updateEmployee, deleteEmployee } = require('../controllers
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.use(protect);
-router.use(authorize('admin'));
+router.use(authorize('admin', 'team_leader'));
 
 router.route('/')
   .get(getEmployees);

@@ -20,7 +20,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Announcements = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdminOrTL = user?.role === 'admin' || user?.role === 'team_leader';
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -99,7 +99,7 @@ const Announcements = () => {
              <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] mt-1 italic">Real-time organizational updates</p>
            </div>
         </div>
-        {isAdmin && (
+        {isAdminOrTL && (
           <button 
             onClick={() => setShowModal(true)}
             className="flex items-center gap-3 px-8 py-4 text-white sbi-gradient rounded-[1.8rem] font-black uppercase tracking-widest text-xs hover:opacity-90 shadow-2xl shadow-blue-200 transition-all active:scale-95"
@@ -155,7 +155,7 @@ const Announcements = () => {
                       </div>
                     )}
                   </div>
-                  {isAdmin && (
+                  {isAdminOrTL && (
                     <button 
                       onClick={() => handleDelete(ann._id)}
                       className="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"

@@ -27,6 +27,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Employees = () => {
   const { user: currentUser } = useAuth();
+  const isAdminOrTL = currentUser?.role === 'admin' || currentUser?.role === 'team_leader';
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -167,13 +168,15 @@ const Employees = () => {
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Team Matrix</h1>
           <p className="text-gray-500 font-medium">Manage organization structure and individual controls</p>
         </div>
-        <button 
-          onClick={handleAddClick}
-          className="flex items-center gap-2 px-8 py-4 text-white sbi-gradient rounded-[1.8rem] font-black uppercase tracking-widest text-xs hover:opacity-90 shadow-xl shadow-blue-100 transition-all active:scale-95"
-        >
-          <UserPlus size={18} />
-          Onboard New Member
-        </button>
+        {isAdminOrTL && (
+          <button 
+            onClick={handleAddClick}
+            className="flex items-center gap-2 px-8 py-4 text-white sbi-gradient rounded-[1.8rem] font-black uppercase tracking-widest text-xs hover:opacity-90 shadow-xl shadow-blue-100 transition-all active:scale-95"
+          >
+            <UserPlus size={18} />
+            Onboard New Member
+          </button>
+        )}
       </div>
 
       {/* Control Bar */}
@@ -209,8 +212,9 @@ const Employees = () => {
               onChange={(e) => setRoleFilter(e.target.value)}
             >
               <option value="all">All Roles</option>
-              <option value="employee">Sales Associate</option>
-              <option value="admin">Administrator</option>
+              <option value="employee">Sales Professional</option>
+              <option value="team_leader">Team Leader</option>
+              <option value="admin">Platform Administrator</option>
             </select>
           </div>
           <div className="flex items-center gap-4 bg-gray-50 px-6 py-2 rounded-2xl border border-gray-100">
@@ -413,6 +417,7 @@ const Employees = () => {
                     onChange={(e) => setFormData({...formData, role: e.target.value})}
                   >
                     <option value="employee">Sales Professional</option>
+                    <option value="team_leader">Team Leader</option>
                     <option value="admin">Platform Administrator</option>
                   </select>
                 </div>

@@ -7,10 +7,10 @@ router.use(protect);
 
 router.route('/')
   .get(getTasks)
-  .post(authorize('admin'), createTask);
+  .post(authorize('admin', 'team_leader'), createTask);
 
 router.route('/:id')
   .put(updateTask)
-  .delete(authorize('admin'), deleteTask);
+  .delete(authorize('admin', 'team_leader'), deleteTask);
 
 module.exports = router;
