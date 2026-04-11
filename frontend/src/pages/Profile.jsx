@@ -12,7 +12,8 @@ import {
   Hash,
   Briefcase,
   Activity,
-  Edit3
+  Edit3,
+  X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 

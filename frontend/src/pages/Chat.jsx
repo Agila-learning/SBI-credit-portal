@@ -614,11 +614,14 @@ const Chat = () => {
 
                             {/* Timestamp + read receipt + delete */}
                             <div className={`flex items-center gap-1.5 mt-1 ${isMine ? 'flex-row-reverse' : ''}`}>
-                              <span className="text-[9px] text-gray-400 font-bold">{msgTimeLabel(msg.createdAt)}</span>
+                              <span className="text-[9px] text-gray-400 font-bold shrink-0">{msgTimeLabel(msg.createdAt)}</span>
                               {isMine && (
-                                msg.isRead
-                                  ? <CheckCheck size={12} className="text-blue-500" />
-                                  : <Check size={12} className="text-gray-400" />
+                                <div className="shrink-0">
+                                  {msg.isRead
+                                    ? <CheckCheck size={12} className="text-blue-500" />
+                                    : <Check size={12} className="text-gray-400" />
+                                  }
+                                </div>
                               )}
                               {isMine && !msg.isDeleted && (
                                 <button 

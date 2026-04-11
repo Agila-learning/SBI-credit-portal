@@ -208,12 +208,22 @@ const updateIncentive = async (req, res) => {
 const exportIncentives = async (req, res) => {
   try {
     const { month } = req.query;
-    const query = month ? { month } : {};
+    let query = month ? { month } : {};
+
+    // Hierarchical filtering for export
+    if (req.user.role === 'team_leader') {
+      const reports = await User.find({ reportingTo: req.user._id }).select('_id');
+      const reportIds = [req.user._id, ...reports.map(r => r._id)];
+      query.employee = { $in: reportIds };
+    }
+
     const records = await Incentive.find(query).populate('employee', 'name employeeId');
 
     let csv = 'Employee,ID,Month,Dispatched,Total Amount,Status\n';
     records.forEach(r => {
-      csv += `${r.employee.name},${r.employee.employeeId},${r.month},${r.dispatchedCards},${r.incentiveAmount},${r.status}\n`;
+      const empName = r.employee?.name || 'Unknown';
+      const empId = r.employee?.employeeId || 'N/A';
+      csv += `${empName},${empId},${r.month},${r.dispatchedCards},${r.incentiveAmount},${r.status}\n`;
     });
 
     res.setHeader('Content-Type', 'text/csv');

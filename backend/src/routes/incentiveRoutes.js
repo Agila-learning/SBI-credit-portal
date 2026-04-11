@@ -18,7 +18,7 @@ router.route('/bulk')
   .post(protect, authorize('admin'), bulkGenerate);
 
 router.route('/export')
-  .get(protect, authorize('admin'), exportIncentives);
+  .get(protect, authorize('admin', 'team_leader'), exportIncentives);
 
 router.route('/:id')
   .put(protect, authorize('admin'), updateIncentive)
