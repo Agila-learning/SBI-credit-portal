@@ -20,7 +20,9 @@ import {
   Tag,
   CheckCircle,
   ArrowRight,
-  Info
+  Info,
+  Eye,
+  FileSpreadsheet
 } from 'lucide-react';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
@@ -36,6 +38,9 @@ const Leads = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Batch Entry State
   const [batchCounts, setBatchCounts] = useState({
@@ -202,6 +207,50 @@ const Leads = () => {
     }
   };
 
+  const handleBulkUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        // Map data to lead schema
+        const mappedLeads = data.map(item => ({
+          customerName: item['Customer Name'] || item['Name'] || item['customerName'],
+          mobileNumber: String(item['Mobile'] || item['Phone'] || item['mobileNumber'] || '').replace(/\D/g, ''),
+          location: item['Location'] || item['Address'] || item['location'],
+          status: item['Status'] || item['status'] || 'Called'
+        }));
+
+        const validLeads = mappedLeads.filter(l => l.customerName && l.mobileNumber.length === 10 && l.location);
+
+        if (validLeads.length === 0) {
+          alert('No valid leads found in file. Ensure columns: Customer Name, Mobile Number, Location');
+          setIsUploading(false);
+          return;
+        }
+
+        await api.post('/api/leads/bulk', { leads: validLeads });
+        alert(`Successfully processed ${validLeads.length} leads!`);
+        fetchLeads();
+      } catch (error) {
+        console.error('Bulk upload failed', error);
+        alert('Bulk upload failed. Please check file format.');
+      } finally {
+        setIsUploading(false);
+        e.target.value = ''; // Reset input
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   const handleExport = () => {
     const dataToExport = leads.map(lead => ({
       'Customer Name': lead.customerName,
@@ -247,6 +296,11 @@ const Leads = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 px-6 py-3 text-emerald-600 border-2 border-emerald-100 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-50 transition-all active:scale-95 cursor-pointer">
+            <FileSpreadsheet size={18} />
+            {isUploading ? 'Uploading...' : 'Bulk Upload'}
+            <input type="file" className="hidden" accept=".xlsx, .xls, .csv" onChange={handleBulkUpload} disabled={isUploading} />
+          </label>
           <button 
             onClick={handleExport}
             className="flex items-center gap-2 px-6 py-3 text-blue-600 border-2 border-blue-100 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-50 transition-all active:scale-95"
@@ -369,8 +423,15 @@ const Leads = () => {
                   </td>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2.5 text-gray-400 hover:text-white hover:bg-sbi-blue rounded-xl transition-all shadow-sm">
-                        <ArrowRight size={18} />
+                      <button 
+                        onClick={() => {
+                          setSelectedLead(lead);
+                          setShowDetailsModal(true);
+                        }}
+                        className="p-2.5 text-gray-400 hover:text-white hover:bg-sbi-blue rounded-xl transition-all shadow-sm"
+                        title="View Lead History"
+                      >
+                        <Eye size={18} />
                       </button>
                     </div>
                   </td>
@@ -389,6 +450,68 @@ const Leads = () => {
           </table>
         </div>
       </div>
+
+      {/* Lead Details Modal */}
+      {showDetailsModal && selectedLead && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md animate-fade-in">
+          <div className="bg-white rounded-[3rem] w-full max-w-2xl shadow-2xl relative overflow-hidden animate-slide-up flex flex-col max-h-[85vh]">
+            <div className="bg-[#1E3A8A] px-10 py-8 text-white flex justify-between items-center shrink-0">
+               <div>
+                 <h2 className="text-2xl font-black uppercase tracking-tighter">Lead Intelligence</h2>
+                 <p className="text-blue-200 text-xs font-bold uppercase tracking-widest opacity-80 mt-1">Audit History · {selectedLead.customerName}</p>
+               </div>
+               <button onClick={() => { setShowDetailsModal(false); setSelectedLead(null); }} className="p-3 hover:bg-white/20 rounded-full transition-colors">
+                  <X size={28} />
+               </button>
+            </div>
+
+            <div className="p-10 overflow-y-auto custom-scrollbar flex-1 space-y-10">
+               <div className="grid grid-cols-2 gap-8">
+                  <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Mobile Access</p>
+                    <p className="text-xl font-black text-sbi-blue">{selectedLead.mobileNumber}</p>
+                  </div>
+                  <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Region / Hub</p>
+                    <p className="text-xl font-black text-gray-700">{selectedLead.location}</p>
+                  </div>
+               </div>
+
+               <div className="space-y-6">
+                  <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Timeline of Interactions</h3>
+                  <div className="space-y-4">
+                    {selectedLead.history && selectedLead.history.length > 0 ? (
+                      selectedLead.history.map((log, idx) => (
+                        <div key={idx} className="relative pl-8 pb-8 border-l-2 border-dashed border-gray-100 last:pb-0">
+                           <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-white border-4 border-sbi-blue"></div>
+                           <div className="bg-gray-50/50 p-5 rounded-2xl border border-gray-100">
+                              <div className="flex justify-between items-center mb-2">
+                                 <span className="text-[10px] font-black text-sbi-blue uppercase tracking-widest">{log.callType || 'General Interaction'}</span>
+                                 <span className="text-[9px] font-black text-gray-400">{format(new Date(log.date || log.createdAt), 'MMM dd, yyyy HH:mm')}</span>
+                              </div>
+                              <p className="text-xs font-black text-gray-900 mb-1">{log.stage}</p>
+                              <p className="text-xs text-gray-500 font-medium italic">"{log.remarks || 'No remarks provided'}"</p>
+                           </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-center py-10 text-gray-400 font-bold uppercase tracking-widest text-xs italic">Initial master entry — no status logs yet</p>
+                    )}
+                  </div>
+               </div>
+            </div>
+            
+            <div className="p-8 bg-gray-50 flex justify-end shrink-0">
+               <button 
+                  onClick={() => { setShowDetailsModal(false); setSelectedLead(null); }}
+                  className="px-10 py-4 bg-white border border-gray-200 text-gray-400 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-100 transition-all"
+               >
+                 Close Detail
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Audit Multi-Step Modal */}
       {showModal && (

@@ -13,6 +13,7 @@ router.route('/')
   .get(protect, getLeads);
 
 router.post('/batch', protect, submitDailyBatch);
+router.post('/bulk', protect, bulkUpload);
 router.get('/mobile/:mobile', protect, getLeadByMobile);
 
 router.route('/:id')

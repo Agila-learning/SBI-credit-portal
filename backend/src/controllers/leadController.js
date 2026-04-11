@@ -207,7 +207,7 @@ const getLeads = async (req, res) => {
       .populate('employee', 'name employeeId')
       .populate({
         path: 'history',
-        options: { sort: { date: -1 }, limit: 1 }
+        options: { sort: { date: -1 }, limit: 50 }
       })
       .sort({ updatedAt: -1 });
 
@@ -268,10 +268,68 @@ const deleteLead = async (req, res) => {
   }
 };
 
+// @desc    Bulk upload leads
+// @route   POST /api/leads/bulk
+// @access  Private
+const bulkUpload = async (req, res) => {
+  const { leads } = req.body;
+
+  if (!Array.isArray(leads) || leads.length === 0) {
+    return res.status(400).json({ message: 'Please provide an array of leads' });
+  }
+
+  try {
+    const results = {
+      created: 0,
+      updated: 0,
+      errors: 0
+    };
+
+    for (const leadData of leads) {
+      try {
+        // Simple validation
+        if (!leadData.customerName || !leadData.mobileNumber || !leadData.location) {
+          results.errors++;
+          continue;
+        }
+
+        let lead = await Lead.findOne({ mobileNumber: leadData.mobileNumber });
+
+        if (!lead) {
+          await Lead.create({
+            customerName: leadData.customerName,
+            mobileNumber: leadData.mobileNumber,
+            location: leadData.location,
+            status: leadData.status || 'Called',
+            employee: req.user._id,
+          });
+          results.created++;
+        } else {
+          lead.customerName = leadData.customerName;
+          lead.location = leadData.location;
+          if (leadData.status) lead.status = leadData.status;
+          await lead.save();
+          results.updated++;
+        }
+      } catch (err) {
+        results.errors++;
+      }
+    }
+
+    res.json({ 
+      message: 'Bulk processing completed', 
+      results 
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getLeadByMobile,
   submitDailyBatch,
   getLeads,
   updateLead,
   deleteLead,
+  bulkUpload,
 };
