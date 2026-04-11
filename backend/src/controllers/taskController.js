@@ -32,7 +32,12 @@ const getTasks = async (req, res) => {
   try {
     let query = {};
     if (req.user.role !== 'admin') {
-      query = { assignedTo: req.user._id };
+      query = { 
+        $or: [
+          { assignedTo: req.user._id },
+          { createdBy: req.user._id }
+        ]
+      };
     }
 
     const tasks = await Task.find(query)

@@ -153,7 +153,9 @@ const Tasks = () => {
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Assigned</p>
             <div className="flex items-end justify-between">
               <h3 className="text-4xl font-black text-[#1E3A8A]">{tasks.length}</h3>
-              <Target size={24} className="text-blue-100" />
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl shadow-inner">
+                <Target size={24} />
+              </div>
             </div>
           </div>
           <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
@@ -162,21 +164,27 @@ const Tasks = () => {
               <h3 className="text-4xl font-black text-green-600">
                 {tasks.length > 0 ? Math.round((tasks.filter(t => t.status === 'Completed').length / tasks.length) * 100) : 0}%
               </h3>
-              <TrendingUp size={24} className="text-green-100" />
+              <div className="p-3 bg-green-50 text-green-600 rounded-2xl shadow-inner">
+                <TrendingUp size={24} />
+              </div>
             </div>
           </div>
           <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Critical Tasks</p>
             <div className="flex items-end justify-between">
               <h3 className="text-4xl font-black text-red-600">{tasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length}</h3>
-              <AlertCircle size={24} className="text-red-100" />
+              <div className="p-3 bg-red-50 text-red-600 rounded-2xl shadow-inner">
+                <AlertCircle size={24} />
+              </div>
             </div>
           </div>
           <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Overdue</p>
             <div className="flex items-end justify-between">
               <h3 className="text-4xl font-black text-amber-600">{tasks.filter(t => new Date(t.dueDate) < new Date() && t.status !== 'Completed').length}</h3>
-              <Clock size={24} className="text-amber-100" />
+              <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl shadow-inner">
+                <Clock size={24} />
+              </div>
             </div>
           </div>
         </div>

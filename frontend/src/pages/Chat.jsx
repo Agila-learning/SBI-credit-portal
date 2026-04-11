@@ -70,7 +70,6 @@ const QUICK_MESSAGES = [
 const Chat = () => {
   const { user } = useAuth();
   const isAdminOrTL = user?.role === 'admin' || user?.role === 'team_leader';
-  const isAdmin = user?.role === 'admin';
 
   const [contacts, setContacts]         = useState([]);
   const [selected, setSelected]         = useState(null);
@@ -357,7 +356,7 @@ const Chat = () => {
     <div className="flex h-[calc(100vh-140px)] md:h-[calc(100vh-120px)] rounded-3xl shadow-2xl border border-gray-100 overflow-hidden bg-white mx-auto max-w-[1600px]" style={{ minHeight: 450 }}>
 
       {/* ═══════════════════ LEFT — CONTACTS ═══════════════════ */}
-      <aside className="w-80 flex flex-col border-r border-gray-100 bg-[#F8FAFC] shrink-0">
+      <aside className="w-80 flex flex-col border-r border-gray-100 bg-[#F8FAFC] shrink-0 min-h-0">
         {/* Header */}
         <div className="px-6 py-5 bg-white border-b border-gray-100">
           <div className="flex items-center justify-between mb-4">
@@ -445,7 +444,7 @@ const Chat = () => {
       </aside>
 
       {/* ═══════════════════ MIDDLE — CHAT WINDOW ═══════════════════ */}
-      <main className="flex-1 flex flex-col bg-white min-w-0">
+      <main className="flex-1 flex flex-col bg-white min-w-0 min-h-0">
         {selected ? (
           <>
             {/* Chat Header */}

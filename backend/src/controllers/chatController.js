@@ -120,11 +120,14 @@ const sendMessage = async (req, res) => {
     }
 
     if (isBroadcast) {
-      // Send to all employees
-      const employees = await User.find({ role: 'employee' }).select('_id');
+      // Send to all employees and team leaders
+      const recipients = await User.find({ 
+        role: { $in: ['employee', 'team_leader'] },
+        _id: { $ne: req.user._id } 
+      }).select('_id');
       const messages = await Promise.all(
-        employees.map(emp =>
-          Message.create({ ...msgData, recipient: emp._id })
+        recipients.map(r =>
+          Message.create({ ...msgData, recipient: r._id })
         )
       );
       return res.status(201).json({ broadcast: true, count: messages.length });
