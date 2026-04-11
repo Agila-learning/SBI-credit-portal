@@ -462,19 +462,19 @@ const Dashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-sm">
-              <h3 className="text-xl font-black text-[#1E3A8A] flex items-center gap-3 mb-10">
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 md:p-10 shadow-sm flex flex-col">
+              <h3 className="text-xl font-black text-[#1E3A8A] flex items-center gap-3 mb-10 shrink-0">
                 <Trophy size={24} className="text-emerald-500" /> High Earners (Incentives)
               </h3>
-              <div className="space-y-5">
+              <div className="space-y-5 flex-1 overflow-y-auto pr-2 max-h-[450px]">
                 {incentives.sort((a,b) => b.incentiveAmount - a.incentiveAmount).slice(0, 5).map((inc, index) => (
-                  <div key={inc._id} className="flex items-center gap-5 p-5 rounded-[2rem] bg-gray-50/50 border border-gray-100 group">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-black text-xs">{index + 1}</div>
+                  <div key={inc._id} className="flex items-center gap-5 p-5 rounded-[2rem] bg-gray-50/50 border border-gray-100 group transition-all hover:bg-white hover:shadow-md">
+                    <div className="w-10 h-10 shrink-0 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-black text-xs">{index + 1}</div>
                     <div className="flex-1 min-w-0">
                       <p className="font-black text-[#1E3A8A] text-sm truncate">{inc.employee?.name}</p>
                       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{inc.month}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <p className="text-lg font-black text-emerald-600">₹{inc.incentiveAmount.toLocaleString()}</p>
                     </div>
                   </div>
@@ -482,19 +482,19 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-sm">
-              <h3 className="text-xl font-black text-[#1E3A8A] flex items-center gap-3 mb-10">
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 md:p-10 shadow-sm flex flex-col">
+              <h3 className="text-xl font-black text-[#1E3A8A] flex items-center gap-3 mb-10 shrink-0">
                 <Truck size={24} className="text-blue-600" /> Top Dispatches
               </h3>
-              <div className="space-y-5">
+              <div className="space-y-5 flex-1 overflow-y-auto pr-2 max-h-[450px]">
                 {leaderboard.sort((a,b) => b.totalDispatched - a.totalDispatched).slice(0, 5).map((item, index) => (
-                  <div key={item._id} className="flex items-center gap-5 p-5 rounded-[2rem] bg-gray-50/50 border border-gray-100 group">
-                    <div className="w-10 h-10 rounded-xl bg-[#1E3A8A] flex items-center justify-center text-white font-black text-xs text-[10px]">{index + 1}</div>
+                  <div key={item._id} className="flex items-center gap-5 p-5 rounded-[2rem] bg-gray-50/50 border border-gray-100 group transition-all hover:bg-white hover:shadow-md">
+                    <div className="w-10 h-10 shrink-0 rounded-xl bg-[#1E3A8A] flex items-center justify-center text-white font-black text-xs text-[10px]">{index + 1}</div>
                     <div className="flex-1 min-w-0">
                       <p className="font-black text-[#1E3A8A] text-sm truncate">{item.employeeName}</p>
                       <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{item.employeeId}</p>
                     </div>
-                    <div className="bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm shrink-0">
                       <p className="text-[10px] font-black text-blue-600 leading-none">{item.totalDispatched}</p>
                       <p className="text-[7px] font-black text-gray-400 uppercase mt-1">Cards</p>
                     </div>

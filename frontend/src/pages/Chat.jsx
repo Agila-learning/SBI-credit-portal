@@ -733,7 +733,7 @@ const Chat = () => {
           </>
         ) : (
           /* Empty State */
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-16 bg-[#F8FAFC]">
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-16 bg-[#F8FAFC] overflow-y-auto">
             <div className="w-24 h-24 rounded-[2rem] bg-blue-50 flex items-center justify-center text-blue-200 mb-6 shadow-inner">
               <MessageSquareIcon size={48} />
             </div>

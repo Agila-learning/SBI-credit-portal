@@ -71,128 +71,112 @@ const Profile = () => {
   );
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">
-      {/* Profile Header Card */}
-      <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl overflow-hidden">
-        <div className="h-40 sbi-gradient relative">
-           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_white_1px,_transparent_1px)] bg-[size:20px_20px]"></div>
-        </div>
-        <div className="px-10 pb-10 relative">
-          <div className="flex flex-col md:flex-row items-end gap-6 -mt-10 relative z-10">
-            
-            <div className="flex-1 mb-4">
-              <h1 className="text-3xl font-black text-gray-900 tracking-tight">{formData.name}</h1>
-              <p className="text-sbi-blue font-black uppercase tracking-[0.2em] text-xs flex items-center gap-2 mt-1">
-                <Briefcase size={14} />
-                {user?.role}
-              </p>
+    <div className="max-w-5xl mx-auto space-y-8 animate-fade-in pb-20">
+      {/* Premium Profile Header */}
+      <div className="relative bg-white rounded-[3.5rem] border border-gray-100 shadow-2xl overflow-hidden p-10 md:p-16">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-50/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-50/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-12">
+          <div className="flex-1 space-y-8 w-full">
+            <div className="text-center md:text-left">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-50 text-[#1E3A8A] rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
+                <Briefcase size={12} /> {user?.role || 'Professional'} Account
+              </span>
+              <h1 className="text-5xl font-black text-gray-900 tracking-tight leading-tight">{formData.name}</h1>
+              <p className="text-gray-400 font-medium text-lg mt-2 italic">“Making digital finance accessible for everyone”</p>
             </div>
 
-            <div className="mb-4">
-               <button 
-                onClick={handleSubmit}
-                disabled={saving}
-                className="flex items-center gap-2 px-8 py-4 text-white sbi-gradient rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-90 shadow-xl shadow-blue-100 transition-all active:scale-95 disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="animate-spin" /> : <Save size={18} />}
-                Save Changes
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2 space-y-8">
-              {message && (
-                <div className={`p-6 rounded-2xl border-l-4 flex items-center gap-4 animate-slide-up ${
-                  message.type === 'success' ? 'bg-green-50 border-l-green-500 text-green-700' : 'bg-red-50 border-l-red-500 text-red-700'
-                }`}>
-                  {message.type === 'success' ? <CheckCircle size={24} /> : <AlertCircle size={24} />}
-                  <p className="font-bold">{message.text}</p>
-                </div>
-              )}
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-6">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Personal Bio (Instagram Style)</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Professional Bio</label>
                   <textarea 
-                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-3xl focus:ring-4 focus:ring-blue-50 focus:bg-white outline-none transition-all font-medium text-gray-700 h-32 resize-none"
-                    placeholder="Write a short summary about yourself..."
+                    className="w-full px-8 py-6 bg-gray-50 border border-gray-100 rounded-[2rem] focus:ring-4 focus:ring-blue-100 focus:bg-white outline-none transition-all font-medium text-gray-700 h-40 resize-none shadow-inner"
+                    placeholder="Tell your team about yourself..."
                     value={formData.bio}
                     maxLength={150}
                     onChange={(e) => setFormData({...formData, bio: e.target.value})}
                   />
-                  <p className="text-[10px] text-right text-gray-400 font-bold tracking-widest uppercase">
-                    {formData.bio.length} / 150
-                  </p>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Communication</label>
+                  <div className="space-y-4">
+                    <div className="relative group">
+                      <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-500 transition-colors" size={18} />
                       <input 
                         type="email"
-                        className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-sm"
+                        className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none transition-all font-bold text-sm"
                         value={formData.email}
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                       />
                     </div>
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                    <div className="relative group">
+                      <Phone className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-500 transition-colors" size={18} />
                       <input 
                         type="tel"
-                        className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-sm"
+                        className="w-full pl-16 pr-8 py-5 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-100 outline-none transition-all font-bold text-sm"
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
                       />
                     </div>
                   </div>
                 </div>
+                
+                <div className="p-8 bg-[#1E3A8A] rounded-[2.5rem] text-white shadow-xl relative overflow-hidden group">
+                  <Activity size={100} className="absolute -right-5 -bottom-5 opacity-10 group-hover:scale-110 transition-transform" />
+                  <p className="text-blue-200 text-[10px] font-black uppercase tracking-widest mb-1">Emplyee Identity</p>
+                  <h4 className="text-2xl font-black">{user?.employeeId || 'N/A'}</h4>
+                  <p className="text-[10px] font-bold text-blue-300 uppercase mt-4 tracking-widest flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                    Verified Member · {user?.role}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-6">
-               <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100 space-y-6">
-                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Account Info</h4>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-sbi-blue shadow-sm border border-gray-100">
-                      <Hash size={18} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Employee ID</p>
-                      <p className="text-sm font-black text-gray-900">{user?.employeeId || 'N/A'}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-sbi-blue shadow-sm border border-gray-100">
-                      <Activity size={18} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Status</p>
-                      <span className="inline-flex items-center gap-1.5 text-green-500 text-[10px] font-black uppercase tracking-widest">
-                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                        Active
-                      </span>
-                    </div>
-                  </div>
+            <div className="flex items-center justify-between pt-6 border-t border-gray-50">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                  <UserIcon size={24} />
+                </div>
+                <div>
+                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Account Status</p>
+                   <p className="text-sm font-black text-gray-900">Premium Professional</p>
                 </div>
               </div>
-
-              <div className="p-8 rounded-[2.5rem] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center space-y-4 bg-white hover:bg-gray-50/50 transition-colors cursor-pointer group">
-                  <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-sbi-blue group-hover:scale-110 transition-transform">
-                    <Edit3 size={24} />
-                  </div>
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-relaxed">Customize your public presence on the sales team portal</p>
-              </div>
+              <button 
+                onClick={handleSubmit}
+                disabled={saving}
+                className="flex items-center gap-3 px-12 py-5 text-white sbi-gradient rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:opacity-95 shadow-2xl shadow-blue-200 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="animate-spin" /> : <Save size={20} />}
+                Update Profile
+              </button>
             </div>
           </div>
         </div>
       </div>
+      
+      {message && (
+        <div className={`p-8 rounded-[2.5rem] border-l-8 flex items-center justify-between gap-6 animate-slide-up bg-white shadow-xl ${
+          message.type === 'success' ? 'border-l-green-500 text-green-700' : 'border-l-red-500 text-red-700'
+        }`}>
+          <div className="flex items-center gap-4">
+            {message.type === 'success' ? <CheckCircle size={32} /> : <AlertCircle size={32} />}
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-60">System Notification</p>
+              <p className="text-lg font-black">{message.text}</p>
+            </div>
+          </div>
+          <button onClick={() => setMessage(null)} className="p-3 hover:bg-gray-100 rounded-2xl transition-all">
+             <X size={20} className="text-gray-400" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
