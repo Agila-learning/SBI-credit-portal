@@ -7,12 +7,10 @@ const getEmployees = async (req, res) => {
   try {
     let query = { isDeleted: false };
     
-    // Team Leader only sees their assigned employees
     if (req.user.role === 'team_leader') {
       query.reportingTo = req.user._id;
-    } else if (req.user.role === 'admin') {
-      // Admin sees everyone except themselves maybe, or all active
     }
+    // Admin query stays { isDeleted: false } which returns all users
 
     const employees = await User.find(query)
       .populate('reportingTo', 'name employeeId')

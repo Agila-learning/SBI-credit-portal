@@ -116,12 +116,24 @@ const Chat = () => {
         return [...m, msg];
       });
 
-      setContacts(prev => prev.map(c => {
-        if (c._id === (msg.sender?._id || msg.sender)) {
-          return { ...c, lastMessage: msg, unreadCount: (c.unreadCount || 0) + 1 };
-        }
-        return c;
-      }));
+      setContacts(prev => {
+        const updated = prev.map(c => {
+          if (c._id === (msg.sender?._id || msg.sender)) {
+            return { ...c, lastMessage: msg, unreadCount: (c.unreadCount || 0) + 1 };
+          }
+          if (c._id === (msg.recipient?._id || msg.recipient)) {
+            return { ...c, lastMessage: msg };
+          }
+          return c;
+        });
+
+        // Re-sort contacts: most recent message first
+        return [...updated].sort((a, b) => {
+          const aTime = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
+          const bTime = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
+      });
     });
 
     socket.on('typing', ({ senderName }) => {
@@ -233,8 +245,15 @@ const Chat = () => {
         recipientId: selected._id,
       });
 
-      // Update contact last message
-      setContacts(prev => prev.map(c => c._id === selected._id ? { ...c, lastMessage: saved } : c));
+      // Update contact last message and re-sort
+      setContacts(prev => {
+        const updated = prev.map(c => c._id === selected._id ? { ...c, lastMessage: saved } : c);
+        return [...updated].sort((a, b) => {
+          const aTime = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
+          const bTime = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
+      });
       socketRef.current?.emit('stopTyping', { recipientId: selected._id });
     } catch (e) {
       console.error(e);

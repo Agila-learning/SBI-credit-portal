@@ -44,7 +44,7 @@ const createAnnouncement = async (req, res) => {
 const getAnnouncements = async (req, res) => {
   try {
     const announcements = await Announcement.find({ 
-      isActive: true,
+      isActive: { $ne: false },
       $or: [
         { expiresAt: { $exists: false } },
         { expiresAt: null },

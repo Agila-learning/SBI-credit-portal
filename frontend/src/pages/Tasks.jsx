@@ -421,11 +421,21 @@ const Tasks = () => {
                           {newTask.assignedTo.includes(emp._id) && <CheckSquare size={14} className="text-white" />}
                         </div>
                         <span className={`text-xs font-black uppercase tracking-widest ${newTask.assignedTo.includes(emp._id) ? 'text-blue-700' : 'text-gray-400 group-hover:text-gray-600'}`}>
-                          {emp.name.split(' ')[0]}
+                          {emp.name.split(' ')[0]} ({emp.employeeId || 'No ID'})
                         </span>
                       </label>
                     )) : (
-                      <p className="col-span-2 text-center text-gray-400 font-bold uppercase tracking-widest text-[8px] py-4">No active employees found to assign</p>
+                      <div className="col-span-2 py-8 text-center bg-gray-100/50 rounded-3xl border border-dashed border-gray-200">
+                        <AlertCircle className="mx-auto text-gray-300 mb-2" size={24} />
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-[9px]">
+                          {user?.role === 'team_leader' 
+                            ? "No employees are currently reporting to you" 
+                            : "No active employees found in system"}
+                        </p>
+                        {user?.role === 'team_leader' && (
+                          <p className="text-[7px] text-gray-400 mt-1 uppercase">Contact Admin to assign reports to your team</p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

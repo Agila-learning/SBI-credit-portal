@@ -65,19 +65,22 @@ const Dashboard = () => {
   const [isCalculating, setIsCalculating] = useState(false);
   const [adjustment, setAdjustment] = useState({ amount: 0, remarks: '' });
   const [tasks, setTasks] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const [statsRes, lbRes, incRes, taskRes] = await Promise.all([
+      const [statsRes, lbRes, incRes, taskRes, annRes] = await Promise.all([
         api.get('/api/stats/dashboard'),
         api.get('/api/stats/leaderboard?period=daily'),
         api.get('/api/incentives'),
-        api.get('/api/tasks')
+        api.get('/api/tasks'),
+        api.get('/api/announcements')
       ]);
       setStats(statsRes.data);
       setLeaderboard(lbRes.data);
       setIncentives(incRes.data);
       setTasks(taskRes.data);
+      setAnnouncements(annRes.data);
     } catch (error) {
       console.error("Dashboard error", error);
     } finally {
@@ -91,7 +94,7 @@ const Dashboard = () => {
     if (socket) {
       socket.on('notification', (notif) => {
         // Refresh dashboard on stats update or task update
-        if (['stats_update', 'task', 'task_update', 'lead_update'].includes(notif.type)) {
+        if (['stats_update', 'task', 'task_update', 'lead_update', 'announcement'].includes(notif.type)) {
           fetchDashboardData();
         }
       });
@@ -221,6 +224,31 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* ── BROADCAST BOARD (ALL ROLES) ── */}
+      {announcements.length > 0 && (
+        <div className="bg-[#1E3A8A] rounded-[3rem] p-8 text-white shadow-2xl relative overflow-hidden group">
+          <div className="absolute right-0 top-0 p-10 opacity-10"><Megaphone size={120} /></div>
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 rounded-[1.8rem] bg-white/10 flex items-center justify-center text-amber-400 animate-pulse">
+                <Bell size={32} />
+              </div>
+              <div className="max-w-xl">
+                <p className="text-blue-200 text-[10px] font-black uppercase tracking-[0.2em] mb-1 italic">Strategic Update • {format(new Date(announcements[0].createdAt), 'MMM dd')}</p>
+                <h2 className="text-2xl font-black tracking-tight">{announcements[0].title}</h2>
+                <p className="text-sm font-medium text-blue-100/80 mt-2 line-clamp-1">{announcements[0].content}</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => window.location.hash = '#/announcements'}
+              className="px-8 py-4 bg-white text-[#1E3A8A] rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-50 transition-all active:scale-95 shadow-xl"
+            >
+              View Board ({announcements.length})
+            </button>
+          </div>
+        </div>
+      )}
 
       {activeTab === 'overview' ? (
         <>
