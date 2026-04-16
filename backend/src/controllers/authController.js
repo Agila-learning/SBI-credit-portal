@@ -43,15 +43,31 @@ const registerUser = async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-  console.log('Login attempt:', email);
+  const { email: identifier, password } = req.body;
+  console.log('Login attempt:', identifier);
 
   try {
-    const user = await User.findOne({ email }).select('+password');
+    // Search for user by email or phone
+    const user = await User.findOne({
+      $or: [
+        { email: identifier.toLowerCase() },
+        { phone: identifier }
+      ]
+    }).select('+password');
 
     if (user) {
-      const isMatch = await user.matchPassword(password);
-      console.log('User found, password match:', isMatch);
+      let isMatch = false;
+
+      // Conditional password matching based on role
+      if (user.role === 'admin') {
+        // Admins can log in with email or phone but must use their set password
+        isMatch = await user.matchPassword(password);
+      } else {
+        // Employee and Team Leader use their mobile number as password
+        isMatch = (password === user.phone);
+      }
+
+      console.log(`User found (${user.role}), password match:`, isMatch);
       
       if (isMatch) {
          res.json({
@@ -63,11 +79,11 @@ const loginUser = async (req, res) => {
           token: generateToken(user._id),
         });
       } else {
-        res.status(401).json({ message: 'Invalid email or password' });
+        res.status(401).json({ message: 'Invalid credentials' });
       }
     } else {
       console.log('User not found');
-      res.status(401).json({ message: 'Invalid email or password' });
+      res.status(401).json({ message: 'Invalid credentials' });
     }
   } catch (error) {
     console.error('Login error:', error);

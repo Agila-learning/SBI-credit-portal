@@ -57,7 +57,7 @@ const Login = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address
+                Email / Mobile Number
               </label>
               <div className="mt-1 relative rounded-md shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -66,13 +66,12 @@ const Login = () => {
                 <input
                   id="email"
                   name="email"
-                  type="email"
+                  type="text"
                   required
-                  autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  placeholder="name@sbicard.com"
+                  placeholder="Email or 10-digit Mobile Number"
                 />
               </div>
             </div>
@@ -94,9 +93,12 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  placeholder="••••••••"
+                  placeholder="Password or Mobile Number"
                 />
               </div>
+              <p className="mt-2 text-[10px] text-gray-500 italic">
+                * Employees/TLs: Use Mobile Number as both Login ID and Password
+              </p>
             </div>
 
             <div>
