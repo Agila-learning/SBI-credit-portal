@@ -63,6 +63,12 @@ const Employees = () => {
       setTeamLeaders(res.data.filter(e => e.role === 'team_leader'));
     } catch (error) {
       console.error("Error fetching employees", error);
+      if (error.response?.status === 401) {
+         // Interceptor will handle logout, but we can clear local state
+         setEmployees([]);
+      } else {
+         alert("Failed to fetch team members. Please check your connection.");
+      }
     } finally {
       setLoading(false);
     }

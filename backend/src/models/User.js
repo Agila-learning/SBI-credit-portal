@@ -69,6 +69,11 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  platform: {
+    type: String,
+    default: 'sbi_portal',
+    index: true,
+  },
 });
 
 // Encrypt password using bcrypt

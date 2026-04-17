@@ -73,7 +73,10 @@ const updateUserProfile = async (req, res) => {
 // @access  Private
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find({ _id: { $ne: req.user._id } })
+    const users = await User.find({ 
+      _id: { $ne: req.user._id },
+      platform: 'sbi_portal'
+    })
       .select('name role employeeId profilePicture lastSeen status');
     res.json(users);
   } catch (error) {

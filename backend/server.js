@@ -1,108 +1,134 @@
-const express = require('express');
+const path = require('path');
 const dotenv = require('dotenv');
+
+// Load env vars immediately
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+// Verify critical environment variables
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your_super_secret_jwt_key_12345') {
+  console.warn('WARNING: JWT_SECRET is missing or using a default placeholder. This is insecure and may lead to authentication issues.');
+}
+
+const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const path = require('path');
 const multer = require('multer');
 const http = require('http');
 const { Server } = require('socket.io');
 const connectDB = require('./src/config/db');
 
-// Load env vars
-dotenv.config({ path: path.join(__dirname, '.env') });
-
 // Connect to database
 const User = require('./src/models/User');
 
 const startApp = async () => {
-  try {
-    await connectDB();
-    
-    // Robust Auto-seed for Admin
-    const adminEmail = 'admin@sbicard.com';
-    const adminId = 'ADMIN-001';
-    let admin = await User.findOne({ $or: [{ email: adminEmail }, { employeeId: adminId }] }).select('+password');
-    
-    if (!admin) {
-      console.log('No admin found, creating default admin...');
-      await User.create({
-        name: 'System Administrator',
-        email: adminEmail,
-        password: 'adminpassword123',
-        role: 'admin',
-        employeeId: adminId,
-        phone: '9876543210',
-      });
-      console.log('Default admin created successfully.');
-    } else {
-      console.log('Admin user found, verifying...');
-      admin.role = 'admin';
-      if (admin.email !== adminEmail) admin.email = adminEmail;
-      await admin.save();
+    try {
+      await connectDB();
+      
+      // Migration: Tag legacy documents with 'sbi_portal' platform if not already tagged
+      try {
+        await User.updateMany({ platform: { $exists: false } }, { platform: 'sbi_portal' });
+        console.log('Platform migration completed: Legacy nodes initialized to sbi_portal.');
+      } catch (migErr) {
+        console.error('Migration Warning:', migErr.message);
+      }
+      
+      // Robust Auto-seed for Admin
+      const adminEmail = 'admin@sbicard.com';
+      const adminId = 'ADMIN-001';
+      let admin = await User.findOne({ 
+        $or: [{ email: adminEmail }, { employeeId: adminId }],
+        platform: 'sbi_portal'
+      }).select('+password');
+      
+      if (!admin) {
+        console.log('No admin found, creating default admin...');
+        await User.create({
+          name: 'System Administrator',
+          email: adminEmail,
+          password: 'adminpassword123',
+          role: 'admin',
+          employeeId: adminId,
+          phone: '9876543210',
+          platform: 'sbi_portal'
+        });
+        console.log('Default admin created successfully.');
+      } else {
+        console.log('Admin user found, verifying...');
+        admin.role = 'admin';
+        if (admin.email !== adminEmail) admin.email = adminEmail;
+        await admin.save();
+      }
+  
+      // Robust Auto-seed for Employee
+      const empEmail = 'employee@sbicard.com';
+      const empId = 'EMP-001';
+      let employee = await User.findOne({ 
+        $or: [{ email: empEmail }, { employeeId: empId }],
+        platform: 'sbi_portal'
+      }).select('+password');
+      if (!employee) {
+        console.log('No sample employee found, creating...');
+        await User.create({
+          name: 'Sample Employee',
+          email: empEmail,
+          password: 'adminpassword123',
+          role: 'employee',
+          employeeId: empId,
+          phone: '1234567890',
+          platform: 'sbi_portal'
+        });
+        console.log('Sample employee created.');
+      } else {
+        console.log('Sample employee found, verifying...');
+        employee.role = 'employee';
+        if (employee.email !== empEmail) employee.email = empEmail;
+        await employee.save();
+      }
+      
+      // Robust Auto-seed for Team Leader
+      const tlEmail = 'leader@sbicard.com';
+      const tlId = 'TL-001';
+      let teamLeader = await User.findOne({ 
+        $or: [{ email: tlEmail }, { employeeId: tlId }],
+        platform: 'sbi_portal'
+      }).select('+password');
+      if (!teamLeader) {
+        console.log('No sample team leader found, creating...');
+        await User.create({
+          name: 'Senior Team Leader',
+          email: tlEmail,
+          password: 'adminpassword123',
+          role: 'team_leader',
+          employeeId: tlId,
+          phone: '1231231234',
+          platform: 'sbi_portal'
+        });
+        console.log('Sample team leader created.');
+      } else {
+        console.log('Sample team leader found, verifying...');
+        teamLeader.role = 'team_leader';
+        if (teamLeader.email !== tlEmail) teamLeader.email = tlEmail;
+        await teamLeader.save();
+      }
+  
+      const { setupDailyLeaderboardSnapshot } = require('./src/utils/scheduler');
+      setupDailyLeaderboardSnapshot();
+    } catch (err) {
+      console.error('Failed to start application sequence:', err);
     }
-
-    // Robust Auto-seed for Employee
-    const empEmail = 'employee@sbicard.com';
-    const empId = 'EMP-001';
-    let employee = await User.findOne({ $or: [{ email: empEmail }, { employeeId: empId }] }).select('+password');
-    if (!employee) {
-      console.log('No sample employee found, creating...');
-      await User.create({
-        name: 'Sample Employee',
-        email: empEmail,
-        password: 'adminpassword123',
-        role: 'employee',
-        employeeId: empId,
-        phone: '1234567890',
-      });
-      console.log('Sample employee created.');
-    } else {
-      console.log('Sample employee found, verifying...');
-      employee.role = 'employee';
-      if (employee.email !== empEmail) employee.email = empEmail;
-      await employee.save();
+  };
+  
+  startApp();
+  
+  const app = express();
+  const server = http.createServer(app);
+  const io = new Server(server, {
+    cors: {
+      origin: "*", // Adjust for production
+      methods: ["GET", "POST"]
     }
-    
-    // Robust Auto-seed for Team Leader
-    const tlEmail = 'leader@sbicard.com';
-    const tlId = 'TL-001';
-    let teamLeader = await User.findOne({ $or: [{ email: tlEmail }, { employeeId: tlId }] }).select('+password');
-    if (!teamLeader) {
-      console.log('No sample team leader found, creating...');
-      await User.create({
-        name: 'Senior Team Leader',
-        email: tlEmail,
-        password: 'adminpassword123',
-        role: 'team_leader',
-        employeeId: tlId,
-        phone: '1231231234',
-      });
-      console.log('Sample team leader created.');
-    } else {
-      console.log('Sample team leader found, verifying...');
-      teamLeader.role = 'team_leader';
-      if (teamLeader.email !== tlEmail) teamLeader.email = tlEmail;
-      await teamLeader.save();
-    }
-
-    const { setupDailyLeaderboardSnapshot } = require('./src/utils/scheduler');
-    setupDailyLeaderboardSnapshot();
-  } catch (err) {
-    console.error('Failed to start application sequence:', err);
-  }
-};
-
-startApp();
-
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*", // Adjust for production
-    methods: ["GET", "POST"]
-  }
-});
+  });
 
 // Middleware
 app.use(express.json());

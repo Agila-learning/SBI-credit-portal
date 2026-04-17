@@ -8,7 +8,7 @@ const registerUser = async (req, res) => {
   const { name, email, password, role, employeeId, phone } = req.body;
 
   try {
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email, platform: 'sbi_portal' });
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
@@ -21,6 +21,7 @@ const registerUser = async (req, res) => {
       role,
       employeeId,
       phone,
+      platform: 'sbi_portal'
     });
 
     if (user) {
@@ -52,7 +53,8 @@ const loginUser = async (req, res) => {
       $or: [
         { email: identifier.toLowerCase() },
         { phone: identifier }
-      ]
+      ],
+      platform: 'sbi_portal'
     }).select('+password');
 
     if (user) {

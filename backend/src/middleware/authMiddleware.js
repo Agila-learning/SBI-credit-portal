@@ -13,6 +13,11 @@ const protect = async (req, res, next) => {
       // Get token from header
       token = req.headers.authorization.split(' ')[1];
 
+      if (!token || token === 'undefined' || token === 'null') {
+         console.warn('Auth Middleware: Invalid token string received:', token);
+         return res.status(401).json({ message: 'Invalid token, not authorized' });
+      }
+
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -20,17 +25,22 @@ const protect = async (req, res, next) => {
       req.user = await User.findById(decoded.id).select('-password');
 
       if (!req.user) {
+        console.warn(`Auth Middleware: User with ID ${decoded.id} not found in database`);
         return res.status(401).json({ message: 'User not found, not authorized' });
       }
 
       next();
     } catch (error) {
       console.error('Auth Middleware Error:', error.message);
+      if (error.name === 'TokenExpiredError') {
+        return res.status(401).json({ message: 'Token expired, please login again' });
+      }
       return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
 
   if (!token) {
+    console.warn('Auth Middleware: No token provided in headers');
     return res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
