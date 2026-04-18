@@ -12,7 +12,8 @@ import {
   ListTodo,
   Megaphone,
   Coins,
-  Settings
+  Settings,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,6 +21,7 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const isAdmin = user?.role === 'admin';
+  const isTeamLeader = user?.role === 'team_leader';
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -34,6 +36,10 @@ const Sidebar = () => {
   if (isAdmin) {
     navItems.splice(3, 0, { name: 'Team Matrix', path: '/employees', icon: Users });
     navItems.push({ name: 'Incentive Config', path: '/incentive-config', icon: Settings });
+    navItems.push({ name: 'Team Report', path: '/team-report', icon: FileSpreadsheet });
+  } else if (isTeamLeader) {
+    navItems.push({ name: 'My Incentives', path: '/incentives', icon: Coins });
+    navItems.push({ name: 'Team Report', path: '/team-report', icon: FileSpreadsheet });
   } else {
     navItems.push({ name: 'My Incentives', path: '/incentives', icon: Coins });
   }
@@ -54,32 +60,56 @@ const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 px-4 py-6 overflow-y-auto space-y-1">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3.5 px-4 py-3.5 rounded-xl transition-all duration-150 group relative
-                ${isActive 
-                  ? 'bg-[#DBEAFE] text-[#1E3A8A] font-black border-l-4 border-l-[#2563EB] pl-3' 
-                  : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50 font-bold border-l-4 border-l-transparent pl-3'
-                }`}
-            >
-              <item.icon 
-                size={19} 
-                className={`shrink-0 transition-transform duration-150 ${isActive ? 'text-[#2563EB] scale-110' : 'group-hover:scale-105'}`} 
-              />
-              <span className={`text-sm tracking-tight ${isActive ? 'font-black text-[#1E3A8A]' : ''}`}>
-                {item.name}
-              </span>
-              {isActive && (
-                <ChevronRight size={14} className="ml-auto text-[#2563EB] opacity-60" />
-              )}
-            </NavLink>
-          );
-        })}
+      <div className="flex-1 px-4 py-6 overflow-y-auto space-y-7">
+        {[
+          {
+            title: 'Overview',
+            items: navItems.filter(i => ['Dashboard', 'Sales Leads', 'Leaderboard', 'Team Matrix'].includes(i.name))
+          },
+          {
+            title: 'Workspace',
+            items: navItems.filter(i => ['Task Center', 'Announcements', 'Messaging', 'My Profile'].includes(i.name))
+          },
+          {
+            title: 'Performance',
+            items: navItems.filter(i => ['My Incentives', 'Incentive Config'].includes(i.name))
+          },
+          (isAdmin || isTeamLeader) && {
+            title: 'Reports',
+            items: navItems.filter(i => ['Team Report'].includes(i.name))
+          }
+        ].filter(s => s && s.items.length > 0).map((section, idx) => (
+          <div key={idx} className="space-y-1">
+            <p className="px-4 text-[10px] font-black text-[#1E3A8A] opacity-40 uppercase tracking-[0.2em] mb-3">
+              {section.title}
+            </p>
+            {section.items.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={`flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-150 group relative
+                    ${isActive 
+                      ? 'bg-[#DBEAFE] text-[#1E3A8A] font-black border-l-4 border-l-[#2563EB] pl-3' 
+                      : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50 font-bold border-l-4 border-l-transparent pl-3'
+                    }`}
+                >
+                  <item.icon 
+                    size={18} 
+                    className={`shrink-0 transition-transform duration-150 ${isActive ? 'text-[#2563EB] scale-110' : 'group-hover:scale-105'}`} 
+                  />
+                  <span className={`text-[13px] tracking-tight ${isActive ? 'font-black text-[#1E3A8A]' : ''}`}>
+                    {item.name}
+                  </span>
+                  {isActive && (
+                    <ChevronRight size={14} className="ml-auto text-[#2563EB] opacity-60" />
+                  )}
+                </NavLink>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {/* User Card */}

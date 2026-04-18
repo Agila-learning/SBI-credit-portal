@@ -6,6 +6,7 @@ const DailyReport = require('../models/DailyReport');
 const LeaderboardHistory = require('../models/LeaderboardHistory');
 const Task = require('../models/Task');
 const Incentive = require('../models/Incentive');
+const XLSX = require('xlsx');
 
 // @desc    Get dashboard summary cards
 // @route   GET /api/stats/dashboard
@@ -285,8 +286,213 @@ const getLeaderboardHistory = async (req, res) => {
   }
 };
 
+// @desc    Get team report data for team leader / admin
+// @route   GET /api/stats/team-report
+// @access  Private (team_leader, admin)
+const getTeamReport = async (req, res) => {
+  try {
+    const { startDate, endDate, employeeId } = req.query;
+
+    // Build employee query based on role
+    let memberIds = [];
+    if (req.user.role === 'team_leader') {
+      const members = await User.find({ reportingTo: req.user._id, isDeleted: false }).select('_id name employeeId');
+      memberIds = [req.user._id, ...members.map(m => m._id)];
+    } else if (req.user.role === 'admin') {
+      const members = await User.find({ role: { $in: ['employee', 'team_leader'] }, isDeleted: false }).select('_id name employeeId');
+      memberIds = members.map(m => m._id);
+    } else {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Filter by specific employee if requested
+    let filteredIds = employeeId ? [employeeId] : memberIds;
+
+    // Date range filter
+    let dateFilter = {};
+    if (startDate && endDate) {
+      dateFilter = {
+        date: {
+          $gte: new Date(startDate),
+          $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999))
+        }
+      };
+    } else {
+      // Default: current month
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      dateFilter = { date: { $gte: firstDay } };
+    }
+
+    // Fetch all members with their report summaries
+    const members = await User.find({ _id: { $in: filteredIds }, isDeleted: false }).select('name employeeId phone location joiningDate role');
+
+    const reportData = await Promise.all(members.map(async (member) => {
+      const reports = await DailyReport.find({
+        employee: member._id,
+        ...dateFilter
+      }).sort({ date: 1 });
+
+      const summary = reports.reduce((acc, r) => ({
+        totalCalls: acc.totalCalls + (r.counts?.callsDone || 0),
+        totalSelected: acc.totalSelected + (r.counts?.selected || 0),
+        totalRejected: acc.totalRejected + (r.counts?.rejected || 0),
+        totalDispatched: acc.totalDispatched + (r.counts?.dispatched || 0),
+        reportDays: acc.reportDays + 1,
+      }), { totalCalls: 0, totalSelected: 0, totalRejected: 0, totalDispatched: 0, reportDays: 0 });
+
+      const conversionRate = summary.totalCalls > 0
+        ? ((summary.totalSelected / summary.totalCalls) * 100).toFixed(1)
+        : '0.0';
+
+      const dispatchRate = summary.totalSelected > 0
+        ? ((summary.totalDispatched / summary.totalSelected) * 100).toFixed(1)
+        : '0.0';
+
+      // Daily breakdown
+      const dailyBreakdown = reports.map(r => ({
+        date: format(new Date(r.date), 'dd MMM yyyy'),
+        calls: r.counts?.callsDone || 0,
+        selected: r.counts?.selected || 0,
+        rejected: r.counts?.rejected || 0,
+        dispatched: r.counts?.dispatched || 0,
+      }));
+
+      return {
+        _id: member._id,
+        name: member.name,
+        employeeId: member.employeeId || 'N/A',
+        phone: member.phone || 'N/A',
+        role: member.role,
+        location: member.location || 'N/A',
+        joiningDate: member.joiningDate ? format(new Date(member.joiningDate), 'dd MMM yyyy') : 'N/A',
+        summary: { ...summary, conversionRate, dispatchRate },
+        dailyBreakdown,
+      };
+    }));
+
+    res.json(reportData);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Export team report as Excel
+// @route   GET /api/stats/team-report/export
+// @access  Private (team_leader, admin)
+const exportTeamReport = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    let memberIds = [];
+    if (req.user.role === 'team_leader') {
+      const members = await User.find({ reportingTo: req.user._id, isDeleted: false }).select('_id');
+      memberIds = [req.user._id, ...members.map(m => m._id)];
+    } else if (req.user.role === 'admin') {
+      const members = await User.find({ role: { $in: ['employee', 'team_leader'] }, isDeleted: false }).select('_id');
+      memberIds = members.map(m => m._id);
+    } else {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    let dateFilter = {};
+    let rangeLabel = 'Current Month';
+    if (startDate && endDate) {
+      dateFilter = {
+        date: {
+          $gte: new Date(startDate),
+          $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999))
+        }
+      };
+      rangeLabel = `${startDate} to ${endDate}`;
+    } else {
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      dateFilter = { date: { $gte: firstDay } };
+      rangeLabel = format(now, 'MMMM yyyy');
+    }
+
+    const members = await User.find({ _id: { $in: memberIds }, isDeleted: false }).select('name employeeId phone location role');
+
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1: Summary
+    const summaryData = [['Team Report - ' + rangeLabel], ['']];
+    summaryData.push(['Employee Name', 'Employee ID', 'Phone', 'Role', 'Location', 'Days Reported', 'Total Calls', 'Total Selected', 'Total Rejected', 'Total Dispatched', 'Conversion Rate (%)', 'Dispatch Rate (%)']);
+
+    for (const member of members) {
+      const reports = await DailyReport.find({ employee: member._id, ...dateFilter });
+      const summary = reports.reduce((acc, r) => ({
+        totalCalls: acc.totalCalls + (r.counts?.callsDone || 0),
+        totalSelected: acc.totalSelected + (r.counts?.selected || 0),
+        totalRejected: acc.totalRejected + (r.counts?.rejected || 0),
+        totalDispatched: acc.totalDispatched + (r.counts?.dispatched || 0),
+        reportDays: acc.reportDays + 1,
+      }), { totalCalls: 0, totalSelected: 0, totalRejected: 0, totalDispatched: 0, reportDays: 0 });
+
+      const conversionRate = summary.totalCalls > 0
+        ? parseFloat(((summary.totalSelected / summary.totalCalls) * 100).toFixed(1))
+        : 0;
+      const dispatchRate = summary.totalSelected > 0
+        ? parseFloat(((summary.totalDispatched / summary.totalSelected) * 100).toFixed(1))
+        : 0;
+
+      summaryData.push([
+        member.name,
+        member.employeeId || 'N/A',
+        member.phone || 'N/A',
+        member.role,
+        member.location || 'N/A',
+        summary.reportDays,
+        summary.totalCalls,
+        summary.totalSelected,
+        summary.totalRejected,
+        summary.totalDispatched,
+        conversionRate,
+        dispatchRate,
+      ]);
+    }
+
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, summarySheet, 'Team Summary');
+
+    // Sheet 2: Daily Breakdown (all members)
+    const dailyData = [['Daily Activity Breakdown'], ['']];
+    dailyData.push(['Employee Name', 'Employee ID', 'Date', 'Calls Done', 'Selected', 'Rejected', 'Dispatched']);
+
+    for (const member of members) {
+      const reports = await DailyReport.find({ employee: member._id, ...dateFilter }).sort({ date: 1 });
+      for (const r of reports) {
+        dailyData.push([
+          member.name,
+          member.employeeId || 'N/A',
+          format(new Date(r.date), 'dd MMM yyyy'),
+          r.counts?.callsDone || 0,
+          r.counts?.selected || 0,
+          r.counts?.rejected || 0,
+          r.counts?.dispatched || 0,
+        ]);
+      }
+    }
+
+    const dailySheet = XLSX.utils.aoa_to_sheet(dailyData);
+    XLSX.utils.book_append_sheet(wb, dailySheet, 'Daily Breakdown');
+
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    const filename = `Team_Report_${rangeLabel.replace(/ /g, '_').replace(/to/g, '-')}.xlsx`;
+
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getLeaderboard,
-  getLeaderboardHistory
+  getLeaderboardHistory,
+  getTeamReport,
+  exportTeamReport,
 };

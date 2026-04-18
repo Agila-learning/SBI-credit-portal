@@ -13,6 +13,7 @@ import Tasks from './pages/Tasks';
 import Announcements from './pages/Announcements';
 import Incentives from './pages/Incentives';
 import IncentiveConfig from './pages/IncentiveConfig';
+import TeamReport from './pages/TeamReport';
 import Sidebar from './components/Sidebar';
 
 const ProtectedRoute = ({ children }) => {
@@ -39,6 +40,12 @@ const ProtectedRoute = ({ children }) => {
 const AdminRoute = ({ children }) => {
   const { user } = useAuth();
   if (user?.role !== 'admin') return <Navigate to="/" />;
+  return children;
+};
+
+const TeamLeaderRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (user?.role !== 'admin' && user?.role !== 'team_leader') return <Navigate to="/" />;
   return children;
 };
 
@@ -130,6 +137,16 @@ function App() {
                   <AdminRoute>
                     <IncentiveConfig />
                   </AdminRoute>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/team-report" 
+              element={
+                <ProtectedRoute>
+                  <TeamLeaderRoute>
+                    <TeamReport />
+                  </TeamLeaderRoute>
                 </ProtectedRoute>
               } 
             />
