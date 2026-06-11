@@ -101,6 +101,11 @@ const Leads = () => {
         customerName: '',
         mobileNumber: '',
         location: '',
+        employmentType: '',
+        companyName: '',
+        designation: '',
+        panNumber: '',
+        applicationNumber: '',
         stage: initialStage,
         callType: 'First Time Call',
         remarks: '',
@@ -169,26 +174,26 @@ const Leads = () => {
     e.preventDefault();
     
     // Filter out completely empty rows
-    const validLeads = batchLeads.filter(l => l.customerName || l.mobileNumber || l.location || l.remarks);
+    const validLeads = batchLeads.filter(l => l.customerName || l.mobileNumber || l.location || l.remarks || l.panNumber || l.applicationNumber);
     
     const nameRegex = /^[a-zA-Z\s.,-]+$/;
     let qualityError = null;
 
     for (const l of validLeads) {
-      if (!l.customerName || l.customerName.length < 3 || !nameRegex.test(l.customerName)) {
-        qualityError = `Invalid Name: "${l.customerName || 'Empty'}". Names must be at least 3 letters and contain no numbers/symbols.`;
+      if (l.customerName && (l.customerName.length < 3 || !nameRegex.test(l.customerName))) {
+        qualityError = `Invalid Name: "${l.customerName}". Names must be at least 3 letters and contain no numbers/symbols.`;
         break;
       }
-      if (!l.location || l.location.length < 3 || !nameRegex.test(l.location)) {
-        qualityError = `Invalid Location: "${l.location || 'Empty'}". Locations must be at least 3 letters.`;
+      if (l.location && (l.location.length < 3 || !nameRegex.test(l.location))) {
+        qualityError = `Invalid Location: "${l.location}". Locations must be at least 3 letters.`;
         break;
       }
-      if (!l.mobileNumber || l.mobileNumber.length !== 10) {
+      if (l.mobileNumber && l.mobileNumber.length !== 10) {
         qualityError = "Mobile number must be exactly 10 digits.";
         break;
       }
-      if (!l.remarks || l.remarks.length < 2) {
-        qualityError = "Please provide brief remarks for all interactions.";
+      if (l.panNumber && l.panNumber.length > 0 && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(l.panNumber)) {
+        qualityError = `Invalid PAN Number format. Should be like ABCDE1234F.`;
         break;
       }
     }
@@ -482,15 +487,35 @@ const Leads = () => {
             </div>
 
             <div className="p-10 overflow-y-auto custom-scrollbar flex-1 space-y-10">
-               <div className="grid grid-cols-2 gap-8">
-                  <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
+               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                  <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 md:col-span-2">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Mobile Access</p>
-                    <p className="text-xl font-black text-sbi-blue">{selectedLead.mobileNumber}</p>
+                    <p className="text-xl font-black text-sbi-blue">{selectedLead.mobileNumber || 'N/A'}</p>
                   </div>
-                  <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                  <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 md:col-span-2">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Region / Hub</p>
-                    <p className="text-xl font-black text-gray-700">{selectedLead.location}</p>
+                    <p className="text-xl font-black text-gray-700">{selectedLead.location || 'N/A'}</p>
                   </div>
+                  {selectedLead.employmentType && (
+                    <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 md:col-span-2">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">{selectedLead.employmentType}</p>
+                      <p className="text-lg font-black text-gray-700">
+                        {selectedLead.employmentType === 'Business' ? selectedLead.companyName : selectedLead.designation || 'N/A'}
+                      </p>
+                    </div>
+                  )}
+                  {selectedLead.panNumber && (
+                    <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 md:col-span-1">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">PAN Number</p>
+                      <p className="text-sm font-black text-gray-700">{selectedLead.panNumber}</p>
+                    </div>
+                  )}
+                  {selectedLead.applicationNumber && (
+                    <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 md:col-span-1">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">App No.</p>
+                      <p className="text-sm font-black text-gray-700">{selectedLead.applicationNumber}</p>
+                    </div>
+                  )}
                </div>
 
                <div className="space-y-6">
@@ -759,6 +784,81 @@ const Leads = () => {
                                disabled={lead.isExisting}
                              />
                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-6 border-t border-gray-50 pt-6">
+                          {/* Employment Type */}
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Employment Type</label>
+                            <select 
+                              className="w-full px-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-xs"
+                              value={lead.employmentType || ''}
+                              onChange={(e) => handleLeadChange(index, 'employmentType', e.target.value)}
+                              disabled={lead.isExisting}
+                            >
+                              <option value="">Select Type</option>
+                              <option value="Business">Business</option>
+                              <option value="Salaried">Salaried</option>
+                            </select>
+                          </div>
+
+                          {/* Dynamic Company/Designation */}
+                          {lead.employmentType === 'Business' && (
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Company Name</label>
+                              <input 
+                                type="text" 
+                                className="w-full px-5 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-sm"
+                                placeholder="Company Name"
+                                value={lead.companyName || ''}
+                                onChange={(e) => handleLeadChange(index, 'companyName', e.target.value)}
+                                disabled={lead.isExisting}
+                              />
+                            </div>
+                          )}
+                          {lead.employmentType === 'Salaried' && (
+                            <div className="space-y-2">
+                              <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Designation</label>
+                              <input 
+                                type="text" 
+                                className="w-full px-5 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-sm"
+                                placeholder="Designation"
+                                value={lead.designation || ''}
+                                onChange={(e) => handleLeadChange(index, 'designation', e.target.value)}
+                                disabled={lead.isExisting}
+                              />
+                            </div>
+                          )}
+                          {!lead.employmentType && (
+                            <div className="hidden lg:block"></div>
+                          )}
+
+                          {/* PAN Number */}
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest">PAN Number</label>
+                            <input 
+                              type="text" 
+                              className="w-full px-5 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-sm uppercase"
+                              placeholder="ABCDE1234F"
+                              maxLength={10}
+                              value={lead.panNumber || ''}
+                              onChange={(e) => handleLeadChange(index, 'panNumber', e.target.value.toUpperCase())}
+                              disabled={lead.isExisting}
+                            />
+                          </div>
+
+                          {/* Application Number */}
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Application No.</label>
+                            <input 
+                              type="text" 
+                              className="w-full px-5 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-sm"
+                              placeholder="App No."
+                              value={lead.applicationNumber || ''}
+                              onChange={(e) => handleLeadChange(index, 'applicationNumber', e.target.value)}
+                              disabled={lead.isExisting}
+                            />
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">

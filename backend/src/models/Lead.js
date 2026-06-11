@@ -3,23 +3,37 @@ const mongoose = require('mongoose');
 const leadSchema = new mongoose.Schema({
   customerName: {
     type: String,
-    required: [true, 'Please add customer name'],
-    minlength: [3, 'Customer name must be at least 3 characters'],
-    match: [/^[a-zA-Z\s.,-]+$/, 'Name can only contain letters, spaces, dots, and commas'],
+    required: false,
   },
   mobileNumber: {
     type: String,
-    required: [true, 'Please add mobile number'],
     unique: true,
-    minlength: [10, 'Mobile number must be exactly 10 digits'],
-    maxlength: [10, 'Mobile number must be exactly 10 digits'],
-    match: [/^\d{10}$/, 'Please add a valid 10-digit mobile number'],
+    sparse: true,
   },
   location: {
     type: String,
-    required: [true, 'Please add location'],
-    minlength: [3, 'Location must be at least 3 characters'],
-    match: [/^[a-zA-Z\s.,-]+$/, 'Location can only contain letters, spaces, dots, and commas'],
+    required: false, // Made optional as per previous iteration
+  },
+  employmentType: {
+    type: String,
+    enum: ['Business', 'Salaried', ''],
+    default: ''
+  },
+  companyName: {
+    type: String,
+    default: ''
+  },
+  designation: {
+    type: String,
+    default: ''
+  },
+  panNumber: {
+    type: String,
+    default: ''
+  },
+  applicationNumber: {
+    type: String,
+    default: ''
   },
   status: {
     type: String,

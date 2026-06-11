@@ -61,12 +61,22 @@ const submitDailyBatch = async (req, res) => {
           customerName: leadData.customerName,
           mobileNumber: leadData.mobileNumber,
           location: leadData.location,
+          employmentType: leadData.employmentType,
+          companyName: leadData.companyName,
+          designation: leadData.designation,
+          panNumber: leadData.panNumber,
+          applicationNumber: leadData.applicationNumber,
           status: leadData.stage,
           employee: req.user._id,
         });
       } else {
         // Update existing Lead status
         lead.status = leadData.stage;
+        if (leadData.employmentType !== undefined) lead.employmentType = leadData.employmentType;
+        if (leadData.companyName !== undefined) lead.companyName = leadData.companyName;
+        if (leadData.designation !== undefined) lead.designation = leadData.designation;
+        if (leadData.panNumber !== undefined) lead.panNumber = leadData.panNumber;
+        if (leadData.applicationNumber !== undefined) lead.applicationNumber = leadData.applicationNumber;
         await lead.save();
       }
 
