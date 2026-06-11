@@ -161,6 +161,8 @@ const TeamReport = () => {
 
   const [startDate, setStartDate] = useState(fmt(firstOfMonth));
   const [endDate, setEndDate] = useState(fmt(today));
+  const [datePreset, setDatePreset] = useState('this_month');
+  const [sortBy, setSortBy] = useState('dispatched');
   const [search, setSearch] = useState('');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -184,6 +186,24 @@ const TeamReport = () => {
   useEffect(() => {
     fetchReport();
   }, [fetchReport]);
+
+  const handleDatePreset = (preset) => {
+    setDatePreset(preset);
+    const t = new Date();
+    if (preset === 'today') {
+      setStartDate(fmt(t));
+      setEndDate(fmt(t));
+    } else if (preset === 'yesterday') {
+      const y = new Date(t);
+      y.setDate(y.getDate() - 1);
+      setStartDate(fmt(y));
+      setEndDate(fmt(y));
+    } else if (preset === 'this_month') {
+      const f = new Date(t.getFullYear(), t.getMonth(), 1);
+      setStartDate(fmt(f));
+      setEndDate(fmt(t));
+    }
+  };
 
   const handleExport = async () => {
     setExporting(true);
@@ -211,10 +231,19 @@ const TeamReport = () => {
     }
   };
 
-  const filtered = data.filter(m =>
+  let filtered = data.filter(m =>
     m.name.toLowerCase().includes(search.toLowerCase()) ||
     (m.employeeId || '').toLowerCase().includes(search.toLowerCase())
   );
+
+  filtered = filtered.sort((a, b) => {
+    if (sortBy === 'name') return a.name.localeCompare(b.name);
+    if (sortBy === 'calls') return b.summary.totalCalls - a.summary.totalCalls;
+    if (sortBy === 'selected') return b.summary.totalSelected - a.summary.totalSelected;
+    if (sortBy === 'rejected') return b.summary.totalRejected - a.summary.totalRejected;
+    if (sortBy === 'dispatched') return b.summary.totalDispatched - a.summary.totalDispatched;
+    return 0;
+  });
 
   // Totals
   const totals = filtered.reduce((acc, m) => ({
@@ -259,49 +288,86 @@ const TeamReport = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row gap-4 items-end">
-        <div className="flex-1 flex flex-col gap-1">
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">From Date</label>
-          <input
-            type="date"
-            id="report-start-date"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-            className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
-          />
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+        {/* Top row: Presets & Sort */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-gray-50 pb-4">
+          <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl">
+            {['today', 'yesterday', 'this_month'].map(p => (
+              <button
+                key={p}
+                onClick={() => handleDatePreset(p)}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${datePreset === p ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                {p.replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+
+          {isAdminOrTL && (
+            <div className="flex items-center gap-3">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sort By</label>
+              <select
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold text-[#1E3A8A] outline-none focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="name">Name (A-Z)</option>
+                <option value="dispatched">Cards Dispatched (High to Low)</option>
+                <option value="selected">Selected (High to Low)</option>
+                <option value="rejected">Rejected (High to Low)</option>
+                <option value="calls">Total Calls (High to Low)</option>
+              </select>
+            </div>
+          )}
         </div>
-        <div className="flex-1 flex flex-col gap-1">
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">To Date</label>
-          <input
-            type="date"
-            id="report-end-date"
-            value={endDate}
-            onChange={e => setEndDate(e.target.value)}
-            className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
-          />
-        </div>
-        <div className="flex-1 flex flex-col gap-1">
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Search Member</label>
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+        {/* Bottom row: Dates & Search */}
+        <div className="flex flex-col sm:flex-row gap-4 items-end">
+          <div className="flex-1 flex flex-col gap-1">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">From Date</label>
             <input
-              type="text"
-              id="report-search"
-              placeholder="Name or ID…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+              type="date"
+              id="report-start-date"
+              value={startDate}
+              onChange={e => { setStartDate(e.target.value); setDatePreset('custom'); }}
+              className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
             />
           </div>
+          <div className="flex-1 flex flex-col gap-1">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">To Date</label>
+            <input
+              type="date"
+              id="report-end-date"
+              value={endDate}
+              onChange={e => { setEndDate(e.target.value); setDatePreset('custom'); }}
+              className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+            />
+          </div>
+          {isAdminOrTL && (
+            <div className="flex-1 flex flex-col gap-1">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Search Member</label>
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  id="report-search"
+                  placeholder="Name or ID…"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+                />
+              </div>
+            </div>
+          )}
+          <button
+            id="report-refresh-btn"
+            onClick={fetchReport}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-700 font-black text-sm transition-all"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
         </div>
-        <button
-          id="report-refresh-btn"
-          onClick={fetchReport}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-700 font-black text-sm transition-all"
-        >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          Refresh
-        </button>
       </div>
 
       {/* Summary KPI Cards */}
