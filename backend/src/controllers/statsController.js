@@ -42,12 +42,25 @@ const getDashboardStats = async (req, res) => {
       createdAt: { $gte: today, $lte: endOfDay }
     });
 
+    const todayReports = await DailyReport.find({
+      ...empQuery,
+      date: { $gte: today, $lte: endOfDay }
+    });
+
+    const todayReportStats = todayReports.reduce((acc, curr) => ({
+      called: acc.called + (curr.counts?.callsDone || 0),
+      selected: acc.selected + (curr.counts?.selected || 0),
+      rejected: acc.rejected + (curr.counts?.rejected || 0),
+      dispatched: acc.dispatched + (curr.counts?.dispatched || 0),
+      qd: acc.qd + (curr.counts?.qd || 0)
+    }), { called: 0, selected: 0, rejected: 0, dispatched: 0, qd: 0 });
+
     const todayStats = {
-      called: todayCalled || 0,
-      selected: todayInteractions.filter(i => i.stage === 'Selected').length || 0,
-      rejected: todayInteractions.filter(i => i.stage === 'Rejected').length || 0,
-      dispatched: todayInteractions.filter(i => i.stage === 'Dispatched').length || 0,
-      qd: todayInteractions.filter(i => i.stage === 'QD').length || 0
+      called: Math.max(todayCalled || 0, todayReportStats.called),
+      selected: Math.max(todayInteractions.filter(i => i.stage === 'Selected').length || 0, todayReportStats.selected),
+      rejected: Math.max(todayInteractions.filter(i => i.stage === 'Rejected').length || 0, todayReportStats.rejected),
+      dispatched: Math.max(todayInteractions.filter(i => i.stage === 'Dispatched').length || 0, todayReportStats.dispatched),
+      qd: Math.max(todayInteractions.filter(i => i.stage === 'QD').length || 0, todayReportStats.qd)
     };
 
     // 2. Monthly Stats from DailyReports
@@ -306,7 +319,7 @@ const getTeamReport = async (req, res) => {
       const members = await User.find({ role: { $in: ['employee', 'team_leader'] }, isDeleted: false }).select('_id name employeeId');
       memberIds = members.map(m => m._id);
     } else {
-      return res.status(403).json({ message: 'Not authorized' });
+      memberIds = [req.user._id];
     }
 
     // Filter by specific employee if requested
@@ -398,7 +411,7 @@ const exportTeamReport = async (req, res) => {
       const members = await User.find({ role: { $in: ['employee', 'team_leader'] }, isDeleted: false }).select('_id');
       memberIds = members.map(m => m._id);
     } else {
-      return res.status(403).json({ message: 'Not authorized' });
+      memberIds = [req.user._id];
     }
 
     let dateFilter = {};

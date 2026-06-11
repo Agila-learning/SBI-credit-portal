@@ -42,6 +42,7 @@ const Sidebar = () => {
     navItems.push({ name: 'Team Report', path: '/team-report', icon: FileSpreadsheet });
   } else {
     navItems.push({ name: 'My Incentives', path: '/incentives', icon: Coins });
+    navItems.push({ name: 'My Report', path: '/team-report', icon: FileSpreadsheet });
   }
 
   return (
@@ -74,9 +75,9 @@ const Sidebar = () => {
             title: 'Performance',
             items: navItems.filter(i => ['My Incentives', 'Incentive Config'].includes(i.name))
           },
-          (isAdmin || isTeamLeader) && {
+          {
             title: 'Reports',
-            items: navItems.filter(i => ['Team Report'].includes(i.name))
+            items: navItems.filter(i => ['Team Report', 'My Report'].includes(i.name))
           }
         ].filter(s => s && s.items.length > 0).map((section, idx) => (
           <div key={idx} className="space-y-1">

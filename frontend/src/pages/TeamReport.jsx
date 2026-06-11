@@ -19,6 +19,7 @@ import {
   User,
 } from 'lucide-react';
 import api, { API_URL } from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 const StatPill = ({ label, value, color }) => (
   <div className={`flex flex-col items-center px-4 py-2 rounded-xl ${color}`}>
@@ -151,6 +152,9 @@ const MemberCard = ({ member }) => {
 };
 
 const TeamReport = () => {
+  const { user } = useAuth();
+  const isAdminOrTL = user?.role === 'admin' || user?.role === 'team_leader';
+  
   const today = new Date();
   const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const fmt = (d) => d.toISOString().split('T')[0];
@@ -233,7 +237,7 @@ const TeamReport = () => {
               <FileSpreadsheet size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-gray-900 tracking-tight">Team Report</h1>
+              <h1 className="text-2xl font-black text-gray-900 tracking-tight">{isAdminOrTL ? 'Team Report' : 'My Report'}</h1>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Performance Overview</p>
             </div>
           </div>
