@@ -30,25 +30,11 @@ const submitDailyBatch = async (req, res) => {
   const { 
     date, 
     counts, 
-    leads 
+    leads = []
   } = req.body;
 
-  // 1. Validation Logic
-  if (leads.length !== counts.callsDone) {
-    return res.status(400).json({ 
-      message: `Count mismatch! You entered ${counts.callsDone} calls but provided details for ${leads.length} leads.` 
-    });
-  }
-
-  const selectedCount = leads.filter(l => l.stage === 'Selected').length;
-  const rejectedCount = leads.filter(l => l.stage === 'Rejected').length;
-  const dispatchedCount = leads.filter(l => l.stage === 'Dispatched').length;
-
-  if (selectedCount !== counts.selected || rejectedCount !== counts.rejected || dispatchedCount !== counts.dispatched) {
-    return res.status(400).json({ 
-      message: "Stage distribution mismatch! Actual lead stages do not match the header counts." 
-    });
-  }
+  // Filter valid leads (they should have at least mobileNumber or be properly filled if submitted)
+  const validLeads = leads.filter(l => l.mobileNumber && l.customerName);
 
   try {
     const sessionDate = new Date(date || Date.now());
@@ -106,7 +92,7 @@ const submitDailyBatch = async (req, res) => {
       { employee: req.user._id, date: sessionDate },
       { 
         counts, 
-        actualEntries: leads.length,
+        actualEntries: validLeads.length,
         isVerified: true
       },
       { upsert: true, new: true }
@@ -157,7 +143,7 @@ const submitDailyBatch = async (req, res) => {
     res.status(201).json({ 
       message: 'Daily batch processed successfully', 
       reportId: report._id,
-      entriesProcessed: leads.length
+      entriesProcessed: validLeads.length
     });
 
   } catch (error) {

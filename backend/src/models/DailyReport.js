@@ -16,6 +16,7 @@ const dailyReportSchema = new mongoose.Schema({
     selected: { type: Number, default: 0 },
     rejected: { type: Number, default: 0 },
     dispatched: { type: Number, default: 0 },
+    qd: { type: Number, default: 0 },
   },
   actualEntries: {
     type: Number,

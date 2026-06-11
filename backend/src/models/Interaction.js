@@ -29,7 +29,7 @@ const interactionSchema = new mongoose.Schema({
   },
   stage: {
     type: String,
-    enum: ['Called', 'Selected', 'Rejected', 'Dispatched', 'Pending'],
+    enum: ['Called', 'Selected', 'Rejected', 'Dispatched', 'Pending', 'QD'],
     required: [true, 'Please select current stage'],
   },
   remarks: {

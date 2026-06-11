@@ -47,7 +47,8 @@ const Leads = () => {
     callsDone: 0,
     selected: 0,
     rejected: 0,
-    dispatched: 0
+    dispatched: 0,
+    qd: 0
   });
 
   const [batchLeads, setBatchLeads] = useState([]);
@@ -75,9 +76,9 @@ const Leads = () => {
       return;
     }
 
-    const totalStages = parseInt(batchCounts.selected) + parseInt(batchCounts.rejected) + parseInt(batchCounts.dispatched);
+    const totalStages = parseInt(batchCounts.selected) + parseInt(batchCounts.rejected) + parseInt(batchCounts.dispatched) + parseInt(batchCounts.qd);
     if (totalStages > count) {
-      setErrors({ counts: 'Total of Selected + Rejected + Dispatched cannot exceed total calls' });
+      setErrors({ counts: 'Total of Selected + Rejected + Dispatched + QD cannot exceed total calls' });
       return;
     }
 
@@ -87,12 +88,14 @@ const Leads = () => {
     let s = parseInt(batchCounts.selected);
     let r = parseInt(batchCounts.rejected);
     let d = parseInt(batchCounts.dispatched);
+    let q = parseInt(batchCounts.qd);
 
     for (let i = 0; i < count; i++) {
       let initialStage = 'Called';
       if (s > 0) { initialStage = 'Selected'; s--; }
       else if (r > 0) { initialStage = 'Rejected'; r--; }
       else if (d > 0) { initialStage = 'Dispatched'; d--; }
+      else if (q > 0) { initialStage = 'QD'; q--; }
 
       newLeads.push({
         customerName: '',
@@ -157,16 +160,23 @@ const Leads = () => {
     }
   };
 
+  const handleQuickSubmit = async (e) => {
+    e.preventDefault();
+    await performSubmit([]);
+  };
+
   const handleSubmitBatch = async (e) => {
     e.preventDefault();
     
-    // Validate all leads have required fields and proper data quality
+    // Filter out completely empty rows
+    const validLeads = batchLeads.filter(l => l.customerName || l.mobileNumber || l.location || l.remarks);
+    
     const nameRegex = /^[a-zA-Z\s.,-]+$/;
     let qualityError = null;
 
-    for (const l of batchLeads) {
+    for (const l of validLeads) {
       if (!l.customerName || l.customerName.length < 3 || !nameRegex.test(l.customerName)) {
-        qualityError = `Invalid Name: "${l.customerName || 'Emply'}". Names must be at least 3 letters and contain no numbers/symbols.`;
+        qualityError = `Invalid Name: "${l.customerName || 'Empty'}". Names must be at least 3 letters and contain no numbers/symbols.`;
         break;
       }
       if (!l.location || l.location.length < 3 || !nameRegex.test(l.location)) {
@@ -188,16 +198,20 @@ const Leads = () => {
       return;
     }
 
+    await performSubmit(validLeads);
+  };
+
+  const performSubmit = async (leadsToSubmit) => {
     setIsSubmitting(true);
     try {
       await api.post('/api/leads/batch', {
         date: new Date(),
         counts: batchCounts,
-        leads: batchLeads
+        leads: leadsToSubmit
       });
       setShowModal(false);
       setModalStep(1);
-      setBatchCounts({ callsDone: 0, selected: 0, rejected: 0, dispatched: 0 });
+      setBatchCounts({ callsDone: 0, selected: 0, rejected: 0, dispatched: 0, qd: 0 });
       setBatchLeads([]);
       fetchLeads();
     } catch (error) {
@@ -281,6 +295,7 @@ const Leads = () => {
     'Rejected': 'bg-red-50 text-[var(--stage-rejected)] border-red-100',
     'Dispatched': 'bg-orange-50 text-[var(--stage-dispatched)] border-orange-100',
     'Pending': 'bg-gray-50 text-gray-500 border-gray-100',
+    'QD': 'bg-purple-50 text-purple-600 border-purple-100',
   };
 
   return (
@@ -358,6 +373,7 @@ const Leads = () => {
             <option value="Rejected">Rejected</option>
             <option value="Dispatched">Dispatched</option>
             <option value="Pending">Pending</option>
+            <option value="QD">QD</option>
           </select>
         </div>
       </div>
@@ -634,19 +650,46 @@ const Leads = () => {
                         </button>
                       </div>
                     </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 text-purple-500">QD Count</label>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setBatchCounts(p => ({...p, qd: Math.max(0, p.qd - 1)}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-purple-500 hover:text-white transition-all shrink-0">
+                          <Minus size={16} />
+                        </button>
+                        <input 
+                          type="number" 
+                          min="0"
+                          className="w-full px-6 py-4 bg-purple-50/50 border border-purple-100 rounded-2xl focus:ring-4 focus:ring-purple-50 focus:bg-white outline-none transition-all font-black text-xl text-purple-600 text-center"
+                          value={batchCounts.qd}
+                          onChange={(e) => setBatchCounts({...batchCounts, qd: parseInt(e.target.value) || 0})}
+                        />
+                        <button onClick={() => setBatchCounts(p => ({...p, qd: p.qd + 1}))} className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-purple-500 hover:text-white transition-all shrink-0">
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                   {errors.counts && (
                     <p className="text-red-500 text-xs font-bold text-center italic">{errors.counts}</p>
                   )}
 
-                  <button 
-                    onClick={initBatchLeads}
-                    className="w-full py-5 text-white sbi-gradient rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs hover:opacity-90 shadow-xl shadow-blue-100 transition-all flex items-center justify-center gap-3 active:scale-95"
-                  >
-                    Generate Entry Forms
-                    <ArrowRight size={18} />
-                  </button>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={handleQuickSubmit}
+                      disabled={isSubmitting}
+                      className="flex-1 py-5 text-gray-500 bg-white border-2 border-gray-100 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs hover:bg-gray-50 shadow-xl shadow-gray-100/50 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                    >
+                      {isSubmitting ? <Loader2 className="animate-spin" /> : 'Quick Submit (Counts Only)'}
+                    </button>
+                    <button 
+                      onClick={initBatchLeads}
+                      className="flex-[2] py-5 text-white sbi-gradient rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs hover:opacity-90 shadow-xl shadow-blue-100 transition-all flex items-center justify-center gap-3 active:scale-95"
+                    >
+                      Generate Detailed Forms
+                      <ArrowRight size={18} />
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-10 pb-32">
@@ -680,7 +723,6 @@ const Leads = () => {
                             <div className="relative">
                               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
                               <input 
-                                required 
                                 type="tel" 
                                 pattern="[0-9]{10}"
                                 className="w-full pl-12 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-sm"
@@ -696,7 +738,6 @@ const Leads = () => {
                            <div className="space-y-2">
                               <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Customer Name</label>
                               <input 
-                               required 
                                type="text" 
                                className="w-full px-5 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-sm"
                                placeholder="Letters only"
@@ -710,7 +751,6 @@ const Leads = () => {
                            <div className="space-y-2">
                               <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Location</label>
                               <input 
-                               required 
                                type="text" 
                                className="w-full px-5 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-sm"
                                placeholder="Letters only"
@@ -752,14 +792,14 @@ const Leads = () => {
                               <option value="Rejected">Rejected</option>
                               <option value="Dispatched">Dispatched</option>
                               <option value="Pending">Pending</option>
+                              <option value="QD">QD</option>
                             </select>
                           </div>
 
                           {/* Remarks */}
                           <div className="space-y-2">
-                             <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Short Remarks (Mandatory)</label>
+                             <label className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Short Remarks (Optional)</label>
                              <input 
-                              required 
                               type="text" 
                               className="w-full px-5 py-3 bg-gray-50/50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium text-xs italic"
                               placeholder="e.g., Interested, follow up tomorrow"

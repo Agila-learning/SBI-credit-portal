@@ -46,7 +46,8 @@ const getDashboardStats = async (req, res) => {
       called: todayCalled || 0,
       selected: todayInteractions.filter(i => i.stage === 'Selected').length || 0,
       rejected: todayInteractions.filter(i => i.stage === 'Rejected').length || 0,
-      dispatched: todayInteractions.filter(i => i.stage === 'Dispatched').length || 0
+      dispatched: todayInteractions.filter(i => i.stage === 'Dispatched').length || 0,
+      qd: todayInteractions.filter(i => i.stage === 'QD').length || 0
     };
 
     // 2. Monthly Stats from DailyReports
@@ -56,8 +57,9 @@ const getDashboardStats = async (req, res) => {
     });
     const monthStats = monthlyReports.reduce((acc, curr) => ({
       selected: (acc.selected || 0) + (curr.counts?.selected || 0),
-      dispatched: (acc.dispatched || 0) + (curr.counts?.dispatched || 0)
-    }), { selected: 0, dispatched: 0 });
+      dispatched: (acc.dispatched || 0) + (curr.counts?.dispatched || 0),
+      qd: (acc.qd || 0) + (curr.counts?.qd || 0)
+    }), { selected: 0, dispatched: 0, qd: 0 });
 
     // 3. Overall Leads (Unique Customers)
     const overallTotalLeads = await Lead.countDocuments(empQuery);
@@ -82,8 +84,9 @@ const getDashboardStats = async (req, res) => {
           called: acc.called + (curr.counts?.callsDone || 0),
           selected: acc.selected + (curr.counts?.selected || 0),
           rejected: acc.rejected + (curr.counts?.rejected || 0),
-          dispatched: acc.dispatched + (curr.counts?.dispatched || 0)
-        }), { called: 0, selected: 0, rejected: 0, dispatched: 0 });
+          dispatched: acc.dispatched + (curr.counts?.dispatched || 0),
+          qd: acc.qd + (curr.counts?.qd || 0)
+        }), { called: 0, selected: 0, rejected: 0, dispatched: 0, qd: 0 });
 
         return {
           _id: emp._id,
@@ -150,8 +153,9 @@ const getDashboardStats = async (req, res) => {
       const totals = dayReports.reduce((acc, curr) => ({
         calls: acc.calls + curr.counts.callsDone,
         selected: acc.selected + curr.counts.selected,
-        dispatched: acc.dispatched + curr.counts.dispatched
-      }), { calls: 0, selected: 0, dispatched: 0 });
+        dispatched: acc.dispatched + curr.counts.dispatched,
+        qd: acc.qd + (curr.counts.qd || 0)
+      }), { calls: 0, selected: 0, dispatched: 0, qd: 0 });
 
       return {
         date: format(date, 'MMM dd'),
@@ -338,8 +342,9 @@ const getTeamReport = async (req, res) => {
         totalSelected: acc.totalSelected + (r.counts?.selected || 0),
         totalRejected: acc.totalRejected + (r.counts?.rejected || 0),
         totalDispatched: acc.totalDispatched + (r.counts?.dispatched || 0),
+        totalQD: acc.totalQD + (r.counts?.qd || 0),
         reportDays: acc.reportDays + 1,
-      }), { totalCalls: 0, totalSelected: 0, totalRejected: 0, totalDispatched: 0, reportDays: 0 });
+      }), { totalCalls: 0, totalSelected: 0, totalRejected: 0, totalDispatched: 0, totalQD: 0, reportDays: 0 });
 
       const conversionRate = summary.totalCalls > 0
         ? ((summary.totalSelected / summary.totalCalls) * 100).toFixed(1)
@@ -356,6 +361,7 @@ const getTeamReport = async (req, res) => {
         selected: r.counts?.selected || 0,
         rejected: r.counts?.rejected || 0,
         dispatched: r.counts?.dispatched || 0,
+        qd: r.counts?.qd || 0,
       }));
 
       return {
@@ -418,7 +424,7 @@ const exportTeamReport = async (req, res) => {
 
     // Sheet 1: Summary
     const summaryData = [['Team Report - ' + rangeLabel], ['']];
-    summaryData.push(['Employee Name', 'Employee ID', 'Phone', 'Role', 'Location', 'Days Reported', 'Total Calls', 'Total Selected', 'Total Rejected', 'Total Dispatched', 'Conversion Rate (%)', 'Dispatch Rate (%)']);
+    summaryData.push(['Employee Name', 'Employee ID', 'Phone', 'Role', 'Location', 'Days Reported', 'Total Calls', 'Total Selected', 'Total Rejected', 'Total Dispatched', 'Total QD', 'Conversion Rate (%)', 'Dispatch Rate (%)']);
 
     for (const member of members) {
       const reports = await DailyReport.find({ employee: member._id, ...dateFilter });
@@ -427,8 +433,9 @@ const exportTeamReport = async (req, res) => {
         totalSelected: acc.totalSelected + (r.counts?.selected || 0),
         totalRejected: acc.totalRejected + (r.counts?.rejected || 0),
         totalDispatched: acc.totalDispatched + (r.counts?.dispatched || 0),
+        totalQD: acc.totalQD + (r.counts?.qd || 0),
         reportDays: acc.reportDays + 1,
-      }), { totalCalls: 0, totalSelected: 0, totalRejected: 0, totalDispatched: 0, reportDays: 0 });
+      }), { totalCalls: 0, totalSelected: 0, totalRejected: 0, totalDispatched: 0, totalQD: 0, reportDays: 0 });
 
       const conversionRate = summary.totalCalls > 0
         ? parseFloat(((summary.totalSelected / summary.totalCalls) * 100).toFixed(1))
@@ -448,6 +455,7 @@ const exportTeamReport = async (req, res) => {
         summary.totalSelected,
         summary.totalRejected,
         summary.totalDispatched,
+        summary.totalQD,
         conversionRate,
         dispatchRate,
       ]);
@@ -458,7 +466,7 @@ const exportTeamReport = async (req, res) => {
 
     // Sheet 2: Daily Breakdown (all members)
     const dailyData = [['Daily Activity Breakdown'], ['']];
-    dailyData.push(['Employee Name', 'Employee ID', 'Date', 'Calls Done', 'Selected', 'Rejected', 'Dispatched']);
+    dailyData.push(['Employee Name', 'Employee ID', 'Date', 'Calls Done', 'Selected', 'Rejected', 'Dispatched', 'QD Count']);
 
     for (const member of members) {
       const reports = await DailyReport.find({ employee: member._id, ...dateFilter }).sort({ date: 1 });
@@ -471,6 +479,7 @@ const exportTeamReport = async (req, res) => {
           r.counts?.selected || 0,
           r.counts?.rejected || 0,
           r.counts?.dispatched || 0,
+          r.counts?.qd || 0,
         ]);
       }
     }

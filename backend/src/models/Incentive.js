@@ -26,6 +26,10 @@ const incentiveSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  totalQD: {
+    type: Number,
+    default: 0
+  },
   slabUsed: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'IncentiveSlab'

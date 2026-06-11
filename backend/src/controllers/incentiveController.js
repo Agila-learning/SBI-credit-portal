@@ -49,8 +49,9 @@ const calculateIncentive = async (req, res) => {
       called: acc.called + curr.counts.callsDone,
       selected: acc.selected + curr.counts.selected,
       rejected: acc.rejected + curr.counts.rejected,
-      dispatched: acc.dispatched + curr.counts.dispatched
-    }), { called: 0, selected: 0, rejected: 0, dispatched: 0 });
+      dispatched: acc.dispatched + curr.counts.dispatched,
+      qd: acc.qd + (curr.counts.qd || 0)
+    }), { called: 0, selected: 0, rejected: 0, dispatched: 0, qd: 0 });
 
     // 2. Match with Slab
     const slabs = await IncentiveSlab.find({ isActive: true }).sort({ minCards: 1 });
@@ -76,6 +77,7 @@ const calculateIncentive = async (req, res) => {
       selectedApps: stats.selected,
       totalCalls: stats.called,
       totalRejected: stats.rejected,
+      totalQD: stats.qd,
       slabUsed: matchedSlab ? matchedSlab._id : null,
       rateApplied: rateUsed,
       bonusApplied: bonusApplied,
@@ -128,8 +130,9 @@ const bulkGenerate = async (req, res) => {
           called: acc.called + (curr.counts?.callsDone || 0),
           selected: acc.selected + (curr.counts?.selected || 0),
           rejected: acc.rejected + (curr.counts?.rejected || 0),
-          dispatched: acc.dispatched + (curr.counts?.dispatched || 0)
-        }), { called: 0, selected: 0, rejected: 0, dispatched: 0 });
+          dispatched: acc.dispatched + (curr.counts?.dispatched || 0),
+          qd: acc.qd + (curr.counts?.qd || 0)
+        }), { called: 0, selected: 0, rejected: 0, dispatched: 0, qd: 0 });
 
         const slabs = await IncentiveSlab.find({ isActive: true }).sort({ minCards: 1 });
         const matchedSlab = slabs.find(s => stats.dispatched >= s.minCards && stats.dispatched <= s.maxCards);
@@ -151,6 +154,7 @@ const bulkGenerate = async (req, res) => {
           selectedApps: stats.selected,
           totalCalls: stats.called,
           totalRejected: stats.rejected,
+          totalQD: stats.qd,
           slabUsed: matchedSlab ? matchedSlab._id : null,
           rateApplied: rateUsed,
           bonusApplied: bonusApplied,

@@ -23,7 +23,7 @@ const leadSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Called', 'Selected', 'Rejected', 'Dispatched', 'Pending'],
+    enum: ['Called', 'Selected', 'Rejected', 'Dispatched', 'Pending', 'QD'],
     default: 'Called',
   },
   employee: {
