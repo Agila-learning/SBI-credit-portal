@@ -38,6 +38,7 @@ const Sidebar = () => {
     navItems.push({ name: 'Incentive Config', path: '/incentive-config', icon: Settings });
     navItems.push({ name: 'Team Report', path: '/team-report', icon: FileSpreadsheet });
   } else if (isTeamLeader) {
+    navItems.splice(3, 0, { name: 'Team Matrix', path: '/employees', icon: Users });
     navItems.push({ name: 'My Incentives', path: '/incentives', icon: Coins });
     navItems.push({ name: 'Team Report', path: '/team-report', icon: FileSpreadsheet });
   } else {
