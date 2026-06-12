@@ -116,9 +116,9 @@ function App() {
               path="/employees" 
               element={
                 <ProtectedRoute>
-                  <AdminRoute>
+                  <TeamLeaderRoute>
                     <Employees />
-                  </AdminRoute>
+                  </TeamLeaderRoute>
                 </ProtectedRoute>
               } 
             />
