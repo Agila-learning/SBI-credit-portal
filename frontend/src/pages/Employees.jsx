@@ -424,9 +424,10 @@ const Employees = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Organizational Role</label>
+              {currentUser?.role === 'admin' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-2">Organizational Role</label>
                   <select 
                     className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-4 focus:ring-blue-50 focus:bg-white outline-none transition-all font-black text-xs uppercase tracking-widest"
                     value={formData.role}
@@ -451,6 +452,7 @@ const Employees = () => {
                   </select>
                 </div>
               </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">

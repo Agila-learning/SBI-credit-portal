@@ -5,7 +5,15 @@ const User = require('../models/User');
 // @route   POST /api/auth/register
 // @access  Private/Admin
 const registerUser = async (req, res) => {
-  const { name, email, password, role, employeeId, phone } = req.body;
+  const { name, email, password, role, employeeId, phone, location, reportingTo } = req.body;
+
+  let finalRole = role;
+  let finalReportingTo = reportingTo;
+
+  if (req.user && req.user.role === 'team_leader') {
+    finalRole = 'employee';
+    finalReportingTo = req.user._id;
+  }
 
   try {
     const userExists = await User.findOne({ email, platform: 'sbi_portal' });
@@ -18,9 +26,11 @@ const registerUser = async (req, res) => {
       name,
       email,
       password,
-      role,
+      role: finalRole,
       employeeId,
       phone,
+      location,
+      reportingTo: finalReportingTo,
       platform: 'sbi_portal'
     });
 

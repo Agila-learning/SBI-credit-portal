@@ -30,14 +30,20 @@ const updateEmployee = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    if (req.user.role === 'team_leader' && user.reportingTo?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to update this employee' });
+    }
+
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
     user.phone = req.body.phone || user.phone;
     user.employeeId = req.body.employeeId || user.employeeId;
     user.location = req.body.location || user.location;
     user.status = req.body.status || user.status;
-    user.role = req.body.role || user.role;
-    user.reportingTo = req.body.reportingTo || user.reportingTo;
+    if (req.user.role === 'admin') {
+      user.role = req.body.role || user.role;
+      user.reportingTo = req.body.reportingTo !== undefined ? req.body.reportingTo : user.reportingTo;
+    }
 
     if (req.body.password) {
       user.password = req.body.password;
@@ -57,6 +63,10 @@ const deleteEmployee = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (req.user.role === 'team_leader' && user.reportingTo?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to delete this employee' });
+    }
 
     user.isDeleted = true;
     user.status = 'inactive';
